@@ -1,7 +1,8 @@
 ############################################################
 #   Dev: Josias Moukpe
 #   Class: Machine Learning
-#   Date: 2/23/2022
+#   Assignment: Term Paper
+#   Date: 4/10/2022
 #   file: main.py
 #   Description: main file to run the program
 #############################################################
@@ -9,6 +10,7 @@
 # imports
 import argparse
 from ann import ANN
+from apbt import APBT
 
 def parse_args():
     '''parse the arguments for artificial neural network'''

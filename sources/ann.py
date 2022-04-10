@@ -1,7 +1,8 @@
 ############################################################
 #   Dev: Josias Moukpe
 #   Class: Machine Learning
-#   Date: 2/23/2022
+#   Assginment: Term Paper
+#   Date: 4/10/2022
 #   file: ann.py
 #   Description: main class for artificial neural network
 #   Implementation of backpropagation algorithm for a 
@@ -9,8 +10,12 @@
 #   input parameters are:
 #   - learning rate
 #   - number of hidden units
-#   - number of iterations
+#   - number of hidden layers
+#   - number of epochs
 #   - momentum
+#   - weight decay
+#   - number of folds for k-fold cross validation
+#   - Architecture or topology of the network
 #############################################################
 
 import math
