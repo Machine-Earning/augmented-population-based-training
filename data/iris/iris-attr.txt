@@ -1,0 +1,6 @@
+sepal-length continuous
+sepal-width continuous
+petal-length continuous
+petal-width continuous
+
+Iris Iris-setosa Iris-versicolor Iris-virginica

@@ -1,0 +1,38 @@
+python source/main.py \
+-a data/identity/identity-attr.txt \
+-d data/identity/identity-train.txt \
+-t data/identity/identity-train.txt \
+-k 10 \
+-w models/weights.txt \
+-u 3 \
+-e 5000 \
+-l 1e-3 \
+-m 0.0 \
+-g 0.0 \
+--debug
+
+python source/main.py \
+-a data/iris/iris-attr.txt \
+-d data/iris/iris-train.txt \
+-t data/iris/iris-test.txt \
+-k 10 \
+-w models/weights.txt \
+-u 3 \
+-e 100 \
+-l 1e-3 \
+-m 0.0 \
+-g 0.0 \
+--debug
+
+python source/main.py \
+-a data/tennis/tennis-attr.txt \
+-d data/tennis/tennis-train.txt \
+-t data/tennis/tennis-test.txt \
+-k 10 \
+-w models/weights.txt \
+-u 3 \
+-e 100 \
+-l 1e-3 \
+-m 0.0 \
+-g 0.0 \
+--debug
