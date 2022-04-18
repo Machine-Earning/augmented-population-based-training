@@ -46,6 +46,7 @@ class ANN:
         '''
         self.topology = None # ideally dynamically generated
         self.k_fold = k_fold
+        self.end_training = False
         # hyperparameters
         self.hidden_units = hidden_units
         self.learning_rate = learning_rate
