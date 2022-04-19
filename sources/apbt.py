@@ -9,10 +9,9 @@
 #############################################################
 
 # imports
-from hashlib import new
-from turtle import update
+from secrets import randbelow
 from ann import ANN
-
+import random
 
 # Augmentated Population Based Training
 class APBT:
@@ -24,16 +23,26 @@ class APBT:
     
     '''
     
-    def __init__(self, k: int, debug) -> None:
+    def __init__(self, k: int, 
+        training: str, 
+        testing: str, 
+        attributes: str, 
+        weights_path: str, 
+        debug) -> None:
         '''
         Initialize the APBT class
         '''
         self.k = k
-        self.population = self.generate_population(k)
-        self.hyperparams = [{} for _ in range(k)]
-        self.perfs = [0 for _ in range(k)]
+        self.population = [None for _ in range(k)]
+        self.hyperparams = [None for _ in range(k)]
+        self.perfs = [0.0 for _ in range(k)]
         self.timesteps = [0 for _ in range(k)]
 
+
+        self.training = training
+        self.testing = testing
+        self.attributes = attributes
+        self.weights_path = weights_path
         self.debug = debug
 
         if self.debug:
@@ -43,22 +52,41 @@ class APBT:
             print('Timesteps:', self.timesteps)
 
 
-
+    # TODO: test
     def generate_net(self) -> tuple(ANN, dict):
         '''
         Generate a new network
         '''
-        h = {}
-        net = ANN(hyperparams=h)
+        h = {
+            'k_fold': random.randint(2, 10),
+            'learning_rate': random.uniform(1e-4, 0.1),
+            'momentum': random.uniform(0.1, 0.9),
+            'decay': random.uniform(1e-4, 1e-1),
+            'epochs': random.randint(1, 200),
+            'toplogy': [
+                random.randint(1, 10) 
+                for _ in range(random.randint(1, 6))
+            ] # list of number of nodes in each layer
+        }
+
+        net = ANN(hyperparams=h, 
+            training=self.training,
+            testing=self.testing,
+            attributes=self.attributes,
+            weights_path=self.weights_path,
+            debug=self.debug)
 
         return net, h
        
 
-    def generate_population(self, population_size: int) -> list:
+    def generate_population(self, population_size: int):
         '''
         Generate the population of neural networks
         '''
-        return []
+        for n in range(population_size):
+            net, h = self.generate_net()
+            self.population[n] = net
+            self.hyperparams[n] = h
 
 
 

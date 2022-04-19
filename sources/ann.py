@@ -9,13 +9,13 @@
 #   feed forward neural network with one hidden layer
 #   input parameters are:
 #   - learning rate
-#   - number of hidden units
-#   - number of hidden layers
 #   - number of epochs
 #   - momentum
 #   - weight decay
 #   - number of folds for k-fold cross validation
-#   - Architecture or topology of the network
+#   - Architecture or topology of the network: encoded as
+#   a list of integers where each integer represents the
+#   number of nodes in the respective layer
 #############################################################
 
 import math
@@ -49,7 +49,7 @@ class ANN:
         '''
         Initialize the Artificial Neural Network
         '''
-        self.topology = None # ideally dynamically generated
+        
         self.end_training = False
         # hyperparameters
         self.k_fold = hyperparams['k_fold']
@@ -58,8 +58,9 @@ class ANN:
         self.momentum = hyperparams['momentum']
         self.decay = hyperparams['decay']
         self.epochs = hyperparams['epochs']
+        self.topology = hyperparams['topology'] # ideally dynamically generated
         self.debug = debug
-        self.INIT_VAL = 0.01 # initial value for weights and biases
+        # self.INIT_VAL = 0.01 # initial value for weights and biases
         self.OFFSET = .05 # offset for early stopping
         self.weights_path = weights_path
     
@@ -93,12 +94,16 @@ class ANN:
         self.testing = self.read_data(testing)
         self.n_examples = len(self.training)
 
-        # initialize the weights at random
+        # initialize the weights at random based 
+        # the topology of the network
+
         self.weights = {
-            'hidden': [[self.rand_init() for _ in range(self.input_units + 1)]
-                        for _ in range(self.hidden_units)],
-            'output': [[self.rand_init() for _ in range(self.hidden_units + 1)]
-                        for _ in range(self.output_units)]
+            'hidden': [[self.rand_init() 
+                for _ in range(self.input_units + 1)]
+                for _ in range(self.hidden_units)],
+            'output': [[self.rand_init() 
+                for _ in range(self.hidden_units + 1)]
+                for _ in range(self.output_units)]
         }
 
         # print the everything
