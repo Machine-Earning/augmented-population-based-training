@@ -58,7 +58,7 @@ class ANN:
         self.momentum = hyperparams['momentum']
         self.decay = hyperparams['decay']
         self.epochs = hyperparams['epochs']
-        self.topology = hyperparams['topology'] # ideally dynamically generated
+        self.topology = hyperparams['hiddens_units'] # ideally dynamically generated
         self.debug = debug
         # self.INIT_VAL = 0.01 # initial value for weights and biases
         self.OFFSET = .05 # offset for early stopping
@@ -96,15 +96,28 @@ class ANN:
 
         # initialize the weights at random based 
         # the topology of the network
+        self.topology = [self.input_units] + \
+                        self.topology + \
+                        [self.output_units]
 
         self.weights = {
-            'hidden': [[self.rand_init() 
-                for _ in range(self.input_units + 1)]
-                for _ in range(self.hidden_units)],
-            'output': [[self.rand_init() 
-                for _ in range(self.hidden_units + 1)]
-                for _ in range(self.output_units)]
+            f'W{i}{i-1}': [[self.rand_init() 
+                        for _ in range(self.topology[i-1] + 1)]
+                    for _ in range(self.topology[i])] 
+                for i in range(1, len(self.topology))
         }
+
+
+        # self.weights = {
+        #     'hidden': [[self.rand_init() 
+        #         for _ in range(self.input_units + 1)]
+        #         for _ in range(self.hidden_units)],
+        #     'output': [[self.rand_init() 
+        #         for _ in range(self.hidden_units + 1)]
+        #         for _ in range(self.output_units)]
+        # }
+
+
 
         # print the everything
         if self.debug:
@@ -117,9 +130,7 @@ class ANN:
             print('momentum: ', self.momentum)
             print('epochs: ', self.epochs)
             print('Weights: ', self.weights)
-            print('Input units: ', self.input_units)
-            print('Output units: ', self.output_units)
-            print('Hidden units: ', self.hidden_units)
+            print('Topology: ', self.topology)
 
     def rand_init(self) -> float:
         '''
@@ -142,18 +153,18 @@ class ANN:
         '''
         print('Weights: ', self.weights)
 
-    def print_topology(self):
-        '''
-        Print the topology of the Artificial Neural Network
-        '''
-         # network topology
-        self.topology = {
-            'linear1': f'fully connected ({self.input_units}x{self.hidden_units})',
-            'activation1': 'sigmoid',
-            'linear2': f'fully connected ({self.hidden_units}x{self.output_units})',
-            'activation2': 'sigmoid'
-        }
-        print('Topology: ', self.topology)
+    # def print_topology(self):
+    #     '''
+    #     Print the topology of the Artificial Neural Network
+    #     '''
+    #      # network topology
+    #     self.topology = {
+    #         'linear1': f'fully connected ({self.input_units}x{self.hidden_units})',
+    #         'activation1': 'sigmoid',
+    #         'linear2': f'fully connected ({self.hidden_units}x{self.output_units})',
+    #         'activation2': 'sigmoid'
+    #     }
+    #     print('Topology: ', self.topology)
 
     def print_network(self):
         '''
@@ -370,6 +381,8 @@ class ANN:
         y = self.sigmoid(x)
         return y * (1 - y)
 
+
+    # TODO: update feedforward to support multiple layers
     def feed_forward(self, instance):
         '''
         Feed forward the Artificial Neural Network
@@ -378,6 +391,11 @@ class ANN:
 
         hidden_res = [0.0 for _ in range(self.hidden_units)]
         output_res = [0.0 for _ in range(self.output_units)]
+
+        res = {
+            f'layer{i}': [0.0 for _ in range(self.topology[i])]
+                for i in range(1, len(self.topology))
+        }
 
         # feed forward the hidden layer
         for i in range(self.hidden_units):
@@ -439,6 +457,7 @@ class ANN:
 
         return self.feed_forward(line_instance)
 
+    # TODO: update to support multiple layers
     def loss(self, target, output):
         '''
         Compute the loss for SGD
@@ -462,6 +481,7 @@ class ANN:
 
         return loss
 
+    # TODO: update to support multiple layers
     def back_propagate(self, instance, output):
         '''
         Back propagate the error with momentum, weight 
