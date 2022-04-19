@@ -28,16 +28,21 @@ class ANN:
     '''
     def __init__(
         self, 
-        training,
-        testing,
+        # training,
+        # testing,
+        # attributes,
+        # k_fold,
+        # weights_path,
+        # hidden_units, 
+        # learning_rate, 
+        # epochs,
+        # momentum, 
+        # decay,
+        hyperparams,
+        training, 
+        testing, 
         attributes,
-        k_fold,
         weights_path,
-        hidden_units, 
-        learning_rate, 
-        epochs,
-        momentum, 
-        decay,
         debug=True,
     ) -> None:
         
@@ -45,21 +50,23 @@ class ANN:
         Initialize the Artificial Neural Network
         '''
         self.topology = None # ideally dynamically generated
-        self.k_fold = k_fold
         self.end_training = False
         # hyperparameters
-        self.hidden_units = hidden_units
-        self.learning_rate = learning_rate
-        self.momentum = momentum
-        self.decay = decay
+        self.k_fold = hyperparams['k_fold']
+        self.hidden_units = hyperparams['hidden_units']
+        self.learning_rate = hyperparams['learning_rate']
+        self.momentum = hyperparams['momentum']
+        self.decay = hyperparams['decay']
+        self.epochs = hyperparams['epochs']
         self.debug = debug
-        self.epochs = epochs
         self.INIT_VAL = 0.01 # initial value for weights and biases
         self.OFFSET = .05 # offset for early stopping
         self.weights_path = weights_path
     
         # reading attributes 
-        self.attributes, self.in_attr, self.out_attr = self.read_attributes(attributes) 
+        self.attributes, 
+        self.in_attr, 
+        self.out_attr = self.read_attributes(attributes) 
 
         # getting total number of input units
         self.input_units = 0
@@ -86,11 +93,11 @@ class ANN:
         self.testing = self.read_data(testing)
         self.n_examples = len(self.training)
 
-        # initialize the weights
+        # initialize the weights at random
         self.weights = {
-            'hidden': [[self.INIT_VAL for _ in range(self.input_units + 1)]
+            'hidden': [[self.rand_init() for _ in range(self.input_units + 1)]
                         for _ in range(self.hidden_units)],
-            'output': [[self.INIT_VAL for _ in range(self.hidden_units + 1)]
+            'output': [[self.rand_init() for _ in range(self.hidden_units + 1)]
                         for _ in range(self.output_units)]
         }
 
@@ -108,6 +115,21 @@ class ANN:
             print('Input units: ', self.input_units)
             print('Output units: ', self.output_units)
             print('Hidden units: ', self.hidden_units)
+
+    def rand_init(self) -> float:
+        '''
+        Initialize the weights at random
+        '''
+        # number of nodes in the previous layer
+        n = self.input_units
+        # calculate the range for the weights
+        lower, upper = -(1.0 / math.sqrt(n)), (1.0 / math.sqrt(n))
+        # generate random numbers
+        number = random.random(1000)
+        # scale to the desired range
+        scaled = lower + number * (upper - lower)
+
+        return scaled
              
     def print_weights(self):
         '''

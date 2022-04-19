@@ -44,6 +44,16 @@ class APBT:
 
 
 
+    def generate_net(self) -> tuple(ANN, dict):
+        '''
+        Generate a new network
+        '''
+        h = {}
+        net = ANN(hyperparams=h)
+
+        return net, h
+       
+
     def generate_population(self, population_size: int) -> list:
         '''
         Generate the population of neural networks
