@@ -60,8 +60,8 @@ class APBT:
         h = {
             'k_fold': random.randint(2, 10),
             'learning_rate': random.uniform(1e-4, 0.1),
-            'momentum': random.uniform(0.1, 0.9),
-            'decay': random.uniform(0, .01),
+            'momentum': random.uniform(0.0, 0.9),
+            'decay': random.uniform(0.0, .01),
             'epochs': random.randint(1, 200),
             'hidden_units': [
                 random.randint(1, 10) 

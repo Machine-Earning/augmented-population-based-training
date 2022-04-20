@@ -107,14 +107,7 @@ class ANN:
                 for i in range(1, len(self.topology))
         }
 
-        # self.weights = {
-        #     'hidden': [[self.rand_init() 
-        #         for _ in range(self.input_units + 1)]
-        #         for _ in range(self.hidden_units)],
-        #     'output': [[self.rand_init() 
-        #         for _ in range(self.hidden_units + 1)]
-        #         for _ in range(self.output_units)]
-        # }
+        self.res = None
 
         # print the everything
         if self.debug:
@@ -149,19 +142,6 @@ class ANN:
         Print the weights of the Artificial Neural Network
         '''
         print('Weights: ', self.weights)
-
-    # def print_topology(self):
-    #     '''
-    #     Print the topology of the Artificial Neural Network
-    #     '''
-    #      # network topology
-    #     self.topology = {
-    #         'linear1': f'fully connected ({self.input_units}x{self.hidden_units})',
-    #         'activation1': 'sigmoid',
-    #         'linear2': f'fully connected ({self.hidden_units}x{self.output_units})',
-    #         'activation2': 'sigmoid'
-    #     }
-    #     print('Topology: ', self.topology)
 
     def print_network(self):
         '''
@@ -400,13 +380,14 @@ class ANN:
                         self.weights[f'W{t}{t-1}'][i][j] * res[f'layer{t-1}'][j]
                 # adding the bias
                 res[f'layer{t}'][i] += \
-                    self.weights[f'W{t}{t-1}'][i][len(self.topology[t-1])]
+                    self.weights[f'W{t}{t-1}'][i][self.topology[t-1]]
 
                 # applying the activation function
                 res[f'layer{t}'][i] = self.sigmoid(res[f'layer{t}'][i])
 
         # getting the output
         output = res[f'layer{len(self.topology)-1}']
+        self.res = res
 
         return output
 
@@ -440,7 +421,7 @@ class ANN:
 
         return loss
 
-    # TODO: update to support multiple layers
+    # TODO: test
     def back_propagate(self, example, output):
         '''
         Back propagate the error with momentum, weight 
@@ -448,65 +429,55 @@ class ANN:
         SGD
         '''
 
-        # prior delta update
-        # deltas = {
-        #     'hidden': [[0.0 for _ in range(self.input_units + 1)]
-        #                 for _ in range(self.hidden_units)],
-        #     'output': [[0.0 for _ in range(self.hidden_units + 1)]
-        #                 for _ in range(self.output_units)]
-        # }
-
-        deltas = {
-            f'W{i}{i-1}': [[ 0.0 for _ in range(self.topology[i-1] + 1)]
-                    for _ in range(self.topology[i])] 
-                for i in range(1, len(self.topology))
-        }
-
         # get the target 
         target = example[1]
-        inputs = example[0]
+        # inputs = example[0]
 
         # if self.debug:
         #     print('inputs: ', inputs)
         #     print('Target: ', target)
         #     print('Output: ', output)
 
-        # compute the error for output layer
-        error = [0.0 for _ in range(self.output_units)]
-        for i in range(self.output_units):
-            error[i] = (target[i] - output[i]) * self.d_sigmoid(output[i]) 
+        # prior delta update
+        deltas = {
+            f'W{i}{i-1}': [[ 0.0 for _ in range(self.topology[i-1] + 1)]
+                    for _ in range(self.topology[i])] 
+                for i in range(1, len(self.topology))
+        }
 
-        # compute the error for hidden layer
-        hidden_error = [0.0 for _ in range(self.hidden_units)]
-        for i in range(self.hidden_units):
-            for j in range(self.output_units):
-                hidden_error[i] += error[j] * self.weights['output'][j][i]
-            hidden_error[i] *= self.d_sigmoid(self.hidden_res[i])
+        errors = {
+            f'layer{l}': [0.0 for _ in range(self.topology[l])]
+                for l in range(1, len(self.topology))
+        }
 
+        # calculate the errors
+        for l in range(len(self.topology)-1, 0, -1):
+            for i in range(self.topology[l]):
+                if l == len(self.topology)-1:
+                    errors[f'layer{l}'][i] = target[i] - output[i]
+                else:
+                    for j in range(self.topology[l+1]):
+                        errors[f'layer{l}'][i] += errors[f'layer{l+1}'][j] * \
+                            self.weights[f'W{l+1}{l}'][j][i]
+
+                errors[f'layer{l}'][i] *= self.d_sigmoid(self.res[f'layer{l}'][i])
 
         # weight update factor based on decay
         factor = 1 - 2 * self.learning_rate * self.decay
 
         # update the weights
-        for i in range(self.output_units):
-            for j in range(self.hidden_units):
-                deltas['output'][i][j] = factor * error[i] * self.hidden_res[j] \
-                                + self.momentum * deltas['output'][i][j]
-                self.weights['output'][i][j] += deltas['output'][i][j]
-            
-            deltas['output'][i][self.hidden_units] = factor * error[i] \
-                                + self.momentum * deltas['output'][i][self.hidden_units]
-            self.weights['output'][i][self.hidden_units] += deltas['output'][i][self.hidden_units]
-
-        for i in range(self.hidden_units):
-            for j in range(self.input_units):
-                deltas['hidden'][i][j] = factor * hidden_error[i] * inputs[j] \
-                                + self.momentum * deltas['hidden'][i][j]
-                self.weights['hidden'][i][j] += deltas['hidden'][i][j]
+        for t in range(1, len(self.topology)):
+            for i in range(len(self.weights[f'W{t}{t-1}'])):
+                for j in range(len(self.weights[f'W{t}{t-1}'][i])):
+                    # update the weights
+                    deltas[f'W{t}{t-1}'][i][j] = factor * errors[f'layer{t}'][i] * self.res[f'layer{t-1}'][j] \
+                                    + self.momentum * deltas[f'W{t}{t-1}'][i][j]
+                    self.weights[f'W{t}{t-1}'][i][j] += deltas[f'W{t}{t-1}'][i][j]
                 
-            deltas['hidden'][i][self.input_units] = factor * hidden_error[i] \
-                                + self.momentum * deltas['hidden'][i][self.input_units]  
-            self.weights['hidden'][i][self.input_units] += deltas['hidden'][i][self.input_units]
+                # update the bias
+                deltas[f'W{t}{t-1}'][i][self.topology[t-1]] = factor * errors[f'layer{l}'][i] \
+                                    + self.momentum * deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
+                self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] += deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
 
 
     # TODO: added train for step
