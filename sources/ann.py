@@ -18,7 +18,6 @@
 #   number of nodes in the respective layer
 #############################################################
 
-from ctypes.wintypes import tagRECT
 import math
 import random
 
@@ -49,16 +48,14 @@ class ANN:
         self.momentum = hyperparams['momentum']
         self.decay = hyperparams['decay']
         self.epochs = hyperparams['epochs']
-        self.topology = hyperparams['hiddens_units'] # ideally dynamically generated
+        self.topology = hyperparams['hidden_units'] # ideally dynamically generated
         self.debug = debug
         # self.INIT_VAL = 0.01 # initial value for weights and biases
         self.OFFSET = .05 # offset for early stopping
         self.weights_path = weights_path
     
         # reading attributes 
-        self.attributes, 
-        self.in_attr, 
-        self.out_attr = self.read_attributes(attributes) 
+        self.attributes, self.in_attr, self.out_attr = self.read_attributes(attributes) 
 
         # getting total number of input units
         self.input_units = 0
@@ -116,13 +113,14 @@ class ANN:
     def rand_init(self) -> float:
         '''
         Initialize the weights at random
+        https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/
         '''
         # number of nodes in the previous layer
         n = self.input_units
         # calculate the range for the weights
         lower, upper = -(1.0 / math.sqrt(n)), (1.0 / math.sqrt(n))
         # generate random numbers
-        number = random.random(1000)
+        number = random.random()
         # scale to the desired range
         scaled = lower + number * (upper - lower)
 
@@ -131,14 +129,22 @@ class ANN:
     def print_weights(self):
         '''
         Print the weights of the Artificial Neural Network
+        with 2 decimal places
         '''
-        print('Weights: ', self.weights)
+        # print('Weights: ', self.weights)
+        for key, value in self.weights.items():
+            print(f'{key}: ')
+            for i in range(len(value)):
+                print(f'{i}: ', end='')
+                for j in range(len(value[i])):
+                    print(f'{value[i][j]:.2f} ', end='')
+                print()
 
     def print_network(self):
         '''
         Print the network
         '''
-        self.print_topology()
+        print('Network: ', self.topology)
         self.print_weights()
 
     def save(self, filename=None):
@@ -399,7 +405,7 @@ class ANN:
         for l in range(1, len(self.topology)):
             for i in range(len(self.weights[f'W{l}{l-1}'])):
                 for j in range(len(self.weights[f'W{l}{l-1}'][i])):
-                    w_term += self.weights[f'f{l}{l-1}'][i][j] ** 2
+                    w_term += self.weights[f'W{l}{l-1}'][i][j] ** 2
 
         loss += self.decay * w_term
 
@@ -446,8 +452,8 @@ class ANN:
 
         # update the weights
         for t in range(1, len(self.topology)):
-            for i in range(len(self.weights[f'W{t}{t-1}'])):
-                for j in range(len(self.weights[f'W{t}{t-1}'][i])):
+            for i in range(self.topology[t]):
+                for j in range(self.topology[t-1]):
                     # update the weights
                     deltas[f'W{t}{t-1}'][i][j] = factor * errors[f'layer{t}'][i] * self.res[f'layer{t-1}'][j] \
                                     + self.momentum * deltas[f'W{t}{t-1}'][i][j]
