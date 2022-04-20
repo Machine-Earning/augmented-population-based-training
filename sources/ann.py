@@ -107,7 +107,6 @@ class ANN:
                 for i in range(1, len(self.topology))
         }
 
-
         # self.weights = {
         #     'hidden': [[self.rand_init() 
         #         for _ in range(self.input_units + 1)]
@@ -116,8 +115,6 @@ class ANN:
         #         for _ in range(self.hidden_units + 1)]
         #         for _ in range(self.output_units)]
         # }
-
-
 
         # print the everything
         if self.debug:
@@ -224,7 +221,6 @@ class ANN:
                 else:
                     is_input = False
 
-                
         if self.debug:
             print('Attributes: ', attributes)
             print('Input attributes: ', in_attr)
@@ -242,7 +238,6 @@ class ANN:
         to encode
         '''
         values = self.attributes[attr]
-
         # if self.debug:
         #     print('values: ', values)
         #     print('the attribute to encode is: ', attr)
@@ -382,38 +377,38 @@ class ANN:
         return y * (1 - y)
 
 
-    # TODO: update feedforward to support multiple layers
+    # TODO: test
     def feed_forward(self, instance):
         '''
         Feed forward the Artificial Neural Network
         '''
-
-
-        hidden_res = [0.0 for _ in range(self.hidden_units)]
-        output_res = [0.0 for _ in range(self.output_units)]
 
         res = {
             f'layer{i}': [0.0 for _ in range(self.topology[i])]
                 for i in range(1, len(self.topology))
         }
 
+        # set the input layer to the instance
+        res['layer0'] = instance
+
         # feed forward the hidden layer
-        for i in range(self.hidden_units):
-            for j in range(self.input_units):
-                hidden_res[i] += self.weights['hidden'][i][j] * instance[j]
-            hidden_res[i] += self.weights['hidden'][i][self.input_units] # bias
+        for t in range(1, len(self.topology)):
+            for i in range(self.topology[t]):
+                for j in range(self.topology[t-1]):
+                    # calculating ther linear combination
+                    res[f'layer{t}'][i] += \
+                        self.weights[f'W{t}{t-1}'][i][j] * res[f'layer{t-1}'][j]
+                # adding the bias
+                res[f'layer{t}'][i] += \
+                    self.weights[f'W{t}{t-1}'][i][len(self.topology[t-1])]
 
-        self.hidden_res = [self.sigmoid(x) for x in hidden_res]
+                # applying the activation function
+                res[f'layer{t}'][i] = self.sigmoid(res[f'layer{t}'][i])
 
-        # feed forward the output layer
-        for i in range(self.output_units):
-            for j in range(self.hidden_units):
-                output_res[i] += self.weights['output'][i][j] * self.hidden_res[j]
-            output_res[i] += self.weights['output'][i][self.hidden_units] # bias
-    
-        output_res = [self.sigmoid(x) for x in output_res]
+        # getting the output
+        output = res[f'layer{len(self.topology)-1}']
 
-        return output_res
+        return output
 
     def predict(self, line_instance):
         '''
@@ -421,43 +416,9 @@ class ANN:
         later update to include processing of discrete input 
         and output
         '''
-
-        # items = line_instance.strip().split()
-
-        # if self.debug:
-        #     print('Items: ', items)
-
-        # get items iterator
-        # items_iter = iter(items)
-
-        # instance = []
-        # # get inputs
-        # for attr in self.in_attr:
-        #     value = next(items_iter)
-        #     if self.to_encode(attr):
-        #         # encode discrete values
-        #         encoded = self.onehot(attr, value)
-        #         instance += encoded # since encoded is a list
-        #     else:
-        #         # encode continuous values
-        #         instance.append(float(value))
-
-        # feed forward the network
-        # output_res = self.feed_forward(instance)
-
-        # get the index of the max value
-        # max_index = output_res.index(max(output_res))
-
-        # # get the value of the max value
-        # for attr in self.out_attr:
-
-        # max_value = self.decode(self.out_attr[max_index], output_res)
-
-        # return max_value
-
         return self.feed_forward(line_instance)
 
-    # TODO: update to support multiple layers
+    # TODO: test
     def loss(self, target, output):
         '''
         Compute the loss for SGD
@@ -468,21 +429,19 @@ class ANN:
             loss += (target[i] - output[i]) ** 2
         loss /= 2.0
 
-        weights_term = 0.0
+        w_term = 0.0
         # adding all the weights
-        for i in range(self.hidden_units):
-            for j in range(self.input_units + 1):
-                weights_term += self.weights['hidden'][i][j] ** 2
-        for i in range(self.output_units):
-            for j in range(self.hidden_units + 1):
-                weights_term += self.weights['output'][i][j] ** 2
+        for l in range(1, len(self.topology)):
+            for i in range(len(self.weights[f'W{l}{l-1}'])):
+                for j in range(len(self.weights[f'W{l}{l-1}'][i])):
+                    w_term += self.weights[f'f{l}{l-1}'][i][j] ** 2
 
-        loss += self.decay * weights_term
+        loss += self.decay * w_term
 
         return loss
 
     # TODO: update to support multiple layers
-    def back_propagate(self, instance, output):
+    def back_propagate(self, example, output):
         '''
         Back propagate the error with momentum, weight 
         decay and learning rate
@@ -490,16 +449,22 @@ class ANN:
         '''
 
         # prior delta update
+        # deltas = {
+        #     'hidden': [[0.0 for _ in range(self.input_units + 1)]
+        #                 for _ in range(self.hidden_units)],
+        #     'output': [[0.0 for _ in range(self.hidden_units + 1)]
+        #                 for _ in range(self.output_units)]
+        # }
+
         deltas = {
-            'hidden': [[0.0 for _ in range(self.input_units + 1)]
-                        for _ in range(self.hidden_units)],
-            'output': [[0.0 for _ in range(self.hidden_units + 1)]
-                        for _ in range(self.output_units)]
+            f'W{i}{i-1}': [[ 0.0 for _ in range(self.topology[i-1] + 1)]
+                    for _ in range(self.topology[i])] 
+                for i in range(1, len(self.topology))
         }
 
         # get the target 
-        target = instance[1]
-        inputs = instance[0]
+        target = example[1]
+        inputs = example[0]
 
         # if self.debug:
         #     print('inputs: ', inputs)
@@ -538,11 +503,13 @@ class ANN:
                 deltas['hidden'][i][j] = factor * hidden_error[i] * inputs[j] \
                                 + self.momentum * deltas['hidden'][i][j]
                 self.weights['hidden'][i][j] += deltas['hidden'][i][j]
+                
             deltas['hidden'][i][self.input_units] = factor * hidden_error[i] \
                                 + self.momentum * deltas['hidden'][i][self.input_units]  
             self.weights['hidden'][i][self.input_units] += deltas['hidden'][i][self.input_units]
 
 
+    # TODO: added train for step
     def train(self, train_data=None):
         '''
         Train the Artificial Neural Network
@@ -551,11 +518,9 @@ class ANN:
 
         # get the data
         data = train_data or self.training
-
         k = self.k_fold
 
         if k > 1:
-            
             # randomly shuffle the data into folds 
             random.shuffle(data)
             
@@ -575,7 +540,8 @@ class ANN:
 
             # get the folds
             folds = [
-                data[i:i+fold_size] for i in range(0, num_instances, fold_size)
+                data[i:i+fold_size] 
+                for i in range(0, num_instances, fold_size)
             ]
 
             # scores for each fold
