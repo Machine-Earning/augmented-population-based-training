@@ -18,6 +18,7 @@
 #   number of nodes in the respective layer
 #############################################################
 
+from ctypes.wintypes import tagRECT
 import math
 import random
 
@@ -28,16 +29,6 @@ class ANN:
     '''
     def __init__(
         self, 
-        # training,
-        # testing,
-        # attributes,
-        # k_fold,
-        # weights_path,
-        # hidden_units, 
-        # learning_rate, 
-        # epochs,
-        # momentum, 
-        # decay,
         hyperparams,
         training, 
         testing, 
@@ -170,7 +161,6 @@ class ANN:
             self.weights = eval(f.read())
 
         # print('one weight: ', self.weights['hidden'][0][0])
-
         self.print_weights()
 
 
@@ -178,7 +168,6 @@ class ANN:
         '''
         Read in the attributes
         '''
-
         attributes = {}
         in_attr, out_attr = [], []
         is_input = True
@@ -241,10 +230,6 @@ class ANN:
             for line in f:
                 if len(line) > 0:
                     items = line.strip().split()
-
-                    # if self.debug:
-                    #     print('Items: ', items)
-
                     # get items iterator
                     items_iter = iter(items)
 
@@ -273,7 +258,6 @@ class ANN:
 
                     # check if the encoding should be applied
                     # when encoding applied, update the input or output units sizes
-
                     data.append([In, Out])
                     
                     
@@ -358,7 +342,7 @@ class ANN:
 
 
     # TODO: test
-    def feed_forward(self, instance):
+    def forward(self, instance):
         '''
         Feed forward the Artificial Neural Network
         '''
@@ -391,13 +375,13 @@ class ANN:
 
         return output
 
-    def predict(self, line_instance):
+    def predict(self, instance):
         '''
         Predict the output of the instance
         later update to include processing of discrete input 
         and output
         '''
-        return self.feed_forward(line_instance)
+        return self.forward(instance)
 
     # TODO: test
     def loss(self, target, output):
@@ -422,17 +406,12 @@ class ANN:
         return loss
 
     # TODO: test
-    def back_propagate(self, example, output):
+    def backward(self, target, output):
         '''
         Back propagate the error with momentum, weight 
         decay and learning rate
         SGD
         '''
-
-        # get the target 
-        target = example[1]
-        # inputs = example[0]
-
         # if self.debug:
         #     print('inputs: ', inputs)
         #     print('Target: ', target)
@@ -478,6 +457,19 @@ class ANN:
                 deltas[f'W{t}{t-1}'][i][self.topology[t-1]] = factor * errors[f'layer{l}'][i] \
                                     + self.momentum * deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
                 self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] += deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
+
+
+    def step(self, example):
+        '''
+        Perform a single step of SGD
+        '''
+        inputt, target = example[0], example[1]
+        output = self.forward(inputt)
+        loss = self.loss(target, output)
+        self.backward(target, output)
+
+        return loss
+
 
 
     # TODO: added train for step
@@ -541,16 +533,16 @@ class ANN:
                 # get the train data
                 train_data = train_fold
                 # get the test data
-                validation_data = test_fold
+                vali_data = test_fold
 
-                best_validation_loss, e = float('inf'), 0
+                best_vali_loss, e = float('inf'), 0
 
                 for i in range(self.epochs):
                     
                     # get the loss for training data
                     # train the network
                     train_loss = 0.0
-                    validation_loss = 0.0
+                    vali_loss = 0.0
 
                     if self.debug:
                         print('Epoch: ', i, end='')
@@ -560,38 +552,31 @@ class ANN:
                     
                     for instance in train_data:
                         # get the output
-                        # print(instance[0])
-                        output = self.feed_forward(instance[0])
-                        # compute the loss
-                        train_loss += self.loss(instance[1], output)
-                        # back propagate the error
-                        self.back_propagate(instance, output)
-    
+                        train_loss += self.step(instance)
+
                     # if self.debug:
                     #     # print validation data
-                    #     print('validation: ', validation_data)
+                    #     print('validation: ', vali_data)
 
-                    for instance in validation_data:
-                        # get the output
-                        output = self.feed_forward(instance[0])
+                    for instance in vali_data:
                         # compute the loss
-                        validation_loss += self.loss(instance[1], output)
+                        vali_loss += self.loss(instance[1], self.forward(instance[0]))
 
 
-                    v_loss = validation_loss/len(validation_data)
+                    v_loss = vali_loss/len(vali_data)
                     t_loss = train_loss/len(train_data)
 
                     if self.debug:
                         print('\tTrain Loss: ', t_loss, '\tValidation Loss: ', v_loss)
 
-                    if i == 0 or v_loss < best_validation_loss:
-                        best_validation_loss, e = v_loss, i
-                    elif v_loss > self.OFFSET + best_validation_loss:
-                        scores.append(best_validation_loss)
+                    if i == 0 or v_loss < best_vali_loss:
+                        best_vali_loss, e = v_loss, i
+                    elif v_loss > self.OFFSET + best_vali_loss:
+                        scores.append(best_vali_loss)
                         iterations.append(e)
                         break
                     elif i == self.epochs - 1:
-                        scores.append(best_validation_loss)
+                        scores.append(best_vali_loss)
                         iterations.append(e)
 
             # get the average score
@@ -607,21 +592,21 @@ class ANN:
 
                 for instance in data:
                     # get the output
-                    output = self.feed_forward(instance[0])
-                    # compute the loss
-                    loss += self.loss(instance[1], output)
-                    # back propagate the error
-                    self.back_propagate(instance, output)
+                    # output = self.forward(instance[0])
+                    # # compute the loss
+                    # loss += self.loss(instance[1], output)
+                    # # back propagate the error
+                    # self.backward(instance, output)
+                    loss += self.step(instance)
+
 
                 if self.debug:
                     # print('Weights: ', self.weights)
                     print('Loss: ', loss/len(data), end='\n')
 
         else:
-
             # shuffle the data
             random.shuffle(data)
-
             # train the network
             for i in range(self.epochs):
 
@@ -633,11 +618,12 @@ class ANN:
                 for instance in data:
 
                     # get the output
-                    output = self.feed_forward(instance[0])
-                    # get the loss per instance
-                    loss += self.loss(instance[1], output)
-                    # update the weights
-                    self.back_propagate(instance, output)
+                    # output = self.forward(instance[0])
+                    # # get the loss per instance
+                    # loss += self.loss(instance[1], output)
+                    # # update the weights
+                    # self.backward(instance, output)
+                    loss += self.step(instance)
                     
                 if self.debug:
                     # print('Weights: ', self.weights)
@@ -663,7 +649,7 @@ class ANN:
         # test the network
         for instance in test_data:
             # get the output
-            output = self.feed_forward(instance[0])
+            output = self.forward(instance[0])
 
             if self.debug:
                 print('hidden results: ', self.hidden_res, end='\n')
@@ -691,7 +677,8 @@ class ANN:
         
         num_out = self.output_units
         classes = [
-            [0.0 for i in range(num_out)] for j in range(num_out)
+            [0.0 for _ in range(num_out)] 
+            for _ in range(num_out)
         ]
 
         for i in range(num_out):
