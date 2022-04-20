@@ -53,6 +53,13 @@ def parse_args():
         help='number of individuals in the population (default: 10)'
     )
 
+    parser.add_argument(
+        '-e', '--epochs',
+        type=int,
+        required=True,
+        help='number of epochs to train'
+    )
+
     # parse arguments
     args = parser.parse_args()
     return args
@@ -69,9 +76,12 @@ def main():
     weights_path = args.weights
     debugging = args.debug
     k = args.k_inds
+    epochs = args.epochs
+
 
     apbt = APBT(
         k,
+        epochs,
         training_path,
         testing_path,
         attributes_path,

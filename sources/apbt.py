@@ -21,7 +21,10 @@ class APBT:
     Neural network arcthiecture
     '''
     
-    def __init__(self, k: int, 
+    def __init__(
+        self, 
+        k: int, 
+        end_training: int,
         training: str, 
         testing: str, 
         attributes: str, 
@@ -34,6 +37,7 @@ class APBT:
         self.hyperparams = [None for _ in range(k)]
         self.perfs = [0.0 for _ in range(k)]
         self.timesteps = [0 for _ in range(k)]
+        self.epochs = end_training
         self.debug = debug
 
         # reading attributes 
@@ -53,7 +57,6 @@ class APBT:
             print('Training:', self.training)
             print('Testing:', self.testing)
             print('Number of examples:', self.n_examples)
-
 
     def read_attributes(self, attr_path):
         '''
@@ -226,7 +229,6 @@ class APBT:
             'learning_rate': random.uniform(1e-4, 0.1),
             'momentum': random.uniform(0.0, 0.9),
             'decay': random.uniform(0.0, .01),
-            'epochs': random.randint(1, 200),
             'hidden_units': [
                 random.randint(1, 10) 
                 for _ in range(random.randint(1, 6))
@@ -260,7 +262,7 @@ class APBT:
         given the hyperparameters
         '''
         net.set_hyperparameters(hyperparams)
-        net.step()
+        net.training_step(self.training)
         return net
 
     # TODO: test
@@ -310,21 +312,27 @@ class APBT:
         Train the network population
         '''
         for i in range(self.k):
+            # getting a net of the population
             net = self.population[i]
             hyperparams = self.hyperparams[i]
             perf = self.perfs[i]
             timestep = self.timesteps[i]
 
-            while not net.end_training:
+            # check if the net is ready to exploit
+            for e in range(self.epochs):
+                # print the epoch number
+                print('Epoch: ', e)
+                # optimize the net
                 net = self.step(net, hyperparams)
+                # evaluate the net
                 perf = self.evaluate(net)
 
-                if self.is_ready(perf, timestep, self.population):
-                    new_net, new_hyperparams = self.exploit(net, hyperparams, perf, self.population)
-                    # check if the new network is different
-                    if self.is_diff(new_net, net):
-                        net, hyperparams = self.explore(new_net, new_hyperparams, self.population)
-                        perf = self.evaluate(net)
+                # if self.is_ready(perf, timestep, self.population):
+                #     new_net, new_hyperparams = self.exploit(net, hyperparams, perf, self.population)
+                #     # check if the new network is different
+                #     if self.is_diff(new_net, net):
+                #         net, hyperparams = self.explore(new_net, new_hyperparams, self.population)
+                #         perf = self.evaluate(net)
 
                 # update the population
                 self.population[i] = net
@@ -332,7 +340,6 @@ class APBT:
                 self.perf[i] = perf
                 self.timestep[i] = timestep + 1
             
-
         # return net with the best performance
         best_perf = max(self.perfs)
         best_net = self.population[self.perfs.index(best_perf)]

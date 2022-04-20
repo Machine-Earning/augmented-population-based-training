@@ -45,7 +45,7 @@ class ANN:
         self.learning_rate = hyperparams['learning_rate']
         self.momentum = hyperparams['momentum']
         self.decay = hyperparams['decay']
-        self.epochs = hyperparams['epochs']
+        self.epochs = 1
         self.input_units = input_units
         self.output_units = output_units
         self.debug = debug
@@ -71,7 +71,7 @@ class ANN:
         if self.debug:
             print('learning rate: ', self.learning_rate)
             print('momentum: ', self.momentum)
-            print('epochs: ', self.epochs)
+            # print('epochs: ', self.epochs)
             print('Weights: ', self.weights)
             print('Topology: ', self.topology)
 
@@ -120,7 +120,6 @@ class ANN:
         self.learning_rate = hyperparams['learning_rate']
         self.momentum = hyperparams['momentum']
         self.decay = hyperparams['decay']
-        self.epochs = hyperparams['epochs']
         self.hidden_units = hyperparams['hidden_units']
         self.topology = [self.input_units] + \
             hyperparams['hidden_units'] + \
@@ -169,11 +168,8 @@ class ANN:
         Sigmoid activation function
         '''
         # print('bad x:', x)
-        try :
-            return 1 / (1 + math.exp(-x))
-        except OverflowError:
-            return 0.0
-        # return 1 / (1 + math.exp(-x))
+        try : return 1 / (1 + math.exp(-x))
+        except OverflowError: return 0.0
 
     def d_sigmoid(self, x):
         '''
@@ -182,8 +178,6 @@ class ANN:
         y = self.sigmoid(x)
         return y * (1 - y)
 
-
-    # TODO: test
     def forward(self, instance):
         '''
         Feed forward the Artificial Neural Network
@@ -225,7 +219,6 @@ class ANN:
         '''
         return self.forward(instance)
 
-    # TODO: test
     def loss(self, target, output):
         '''
         Compute the loss for SGD
@@ -247,7 +240,6 @@ class ANN:
 
         return loss
 
-    # TODO: test
     def backward(self, target, output):
         '''
         Back propagate the error with momentum, weight 
@@ -300,7 +292,6 @@ class ANN:
                                     + self.momentum * deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
                 self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] += deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
 
-
     def step(self, example):
         '''
         Perform a single step of SGD
@@ -309,20 +300,17 @@ class ANN:
         output = self.forward(inputt)
         loss = self.loss(target, output)
         self.backward(target, output)
-
+        # return loss
         return loss
 
-
-
-    # TODO: added train for step
-    def train(self, train_data):
+    # TODO: not sure about this
+    def training_step(self, train_data):
         '''
         Train the Artificial Neural Network
         k is the number of folds
         '''
         if not train_data:
             raise ValueError('No training data provided')
-
         # get the data
         data = train_data
         # get number of folds
@@ -331,33 +319,24 @@ class ANN:
         if k > 1:
             # randomly shuffle the data into folds 
             random.shuffle(data)
-            
             # get the number of instances
             num_instances = len(data)
-
             while num_instances < k:
                 data = data * k
                 # get the number of instances
                 num_instances = len(data)
-
-            # if self.debug:
-            #     print('data: ', data)
-
             # get number of data per fold
             fold_size = num_instances // k
-
             # get the folds
             folds = [
                 data[i:i+fold_size] 
                 for i in range(0, num_instances, fold_size)
             ]
-
             # scores for each fold
             scores = []
             iterations = []
 
             for i in range(k):
-
                 if self.debug:
                     print('Fold: ', i)
 
@@ -365,25 +344,18 @@ class ANN:
                 test_fold = folds[i]
                 # get the train folds
                 train_folds = folds[:i] + folds[i+1:]
-
                 # merge train folds
                 train_fold = []
                 for fold in train_folds:
                     train_fold += fold
 
-                # if self.debug:
-                #     print('Test Fold: ', test_fold)
-                #     print('Train Folds: ', train_fold)
-
                 # get the train data
                 train_data = train_fold
                 # get the test data
                 vali_data = test_fold
-
                 best_vali_loss, e = float('inf'), 0
 
                 for i in range(self.epochs):
-                    
                     # get the loss for training data
                     # train the network
                     train_loss = 0.0
@@ -399,15 +371,9 @@ class ANN:
                         # get the output
                         train_loss += self.step(instance)
 
-                    # if self.debug:
-                    #     # print validation data
-                    #     print('validation: ', vali_data)
-
                     for instance in vali_data:
                         # compute the loss
                         vali_loss += self.loss(instance[1], self.forward(instance[0]))
-
-
                     v_loss = vali_loss/len(vali_data)
                     t_loss = train_loss/len(train_data)
 
@@ -423,7 +389,6 @@ class ANN:
                     elif i == self.epochs - 1:
                         scores.append(best_vali_loss)
                         iterations.append(e)
-
             # get the average score
             avg_score = sum(scores) / len(scores)
             avg_iter = sum(iterations) / len(iterations)
@@ -436,12 +401,6 @@ class ANN:
                 loss = 0.0
 
                 for instance in data:
-                    # get the output
-                    # output = self.forward(instance[0])
-                    # # compute the loss
-                    # loss += self.loss(instance[1], output)
-                    # # back propagate the error
-                    # self.backward(instance, output)
                     loss += self.step(instance)
 
                 if self.debug:
@@ -454,28 +413,15 @@ class ANN:
             # train the network
             for i in range(self.epochs):
                 loss = 0.0
-
                 if self.debug:
                     print('Epoch: ', i, end='')
 
                 for instance in data:
-
-                    # get the output
-                    # output = self.forward(instance[0])
-                    # # get the loss per instance
-                    # loss += self.loss(instance[1], output)
-                    # # update the weights
-                    # self.backward(instance, output)
                     loss += self.step(instance)
                     
                 if self.debug:
                     # print('Weights: ', self.weights)
                     print('Loss: ', loss/len(data), end='\n')
-
-            # save the weights
-            # if self.weights_path:
-            #     self.save()
-
 
     def test(self, test_data=None):
         '''
@@ -490,22 +436,10 @@ class ANN:
         for instance in test_data:
             # get the output
             output = self.forward(instance[0])
-            # if self.debug:
-            #     print('hidden results: ', self.hidden_res, end='\n')
-
-            # if self.debug:
-            #     print('Output: ', output)
-            #     print('Target: ', instance[1])
-            #     print('Loss: ', self.loss(instance[1], output), end='\n')
-            
             # check if the output is correct
             accuracy += 1.0 - self.loss(instance[1], output)
-
         accuracy /= len(test_data)
 
-        # if self.debug:
-        #     print('Accuracy: ', accuracy * 100, '%')
-        
         return accuracy
  
     
