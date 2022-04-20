@@ -9,14 +9,13 @@
 
 # imports
 import argparse
-from ann import ANN
 from apbt import APBT
 
 def parse_args():
     '''parse the arguments for artificial neural network'''
 
     parser = argparse.ArgumentParser(
-        description='Artificial Neural Network for classification'
+        description='Population Based Training for Artificial Neural Networks'
     )
 
     parser.add_argument(
@@ -41,13 +40,6 @@ def parse_args():
     )
 
     parser.add_argument(
-        '-k', '--k-fold',
-        type=int,
-        required=False,
-        help='number of folds for k-fold cross validation, k=0 or k=1 for no validation'
-    )
-
-    parser.add_argument(
         '-w', '--weights',
         type=str , 
         required=False,
@@ -55,49 +47,10 @@ def parse_args():
     )
 
     parser.add_argument(
-        '-u', '--hidden-units',
-        type=int, 
-        required=False,
-        help='number of hidden units (default: 3)'
-    )
-
-    parser.add_argument(
-        '-e', '--epochs',
-        type=int, 
-        required=False,
-        default=10,
-        help='number of epochs (default: 10)'
-    )
-
-    parser.add_argument(
-        '-l', '--learning-rate',
-        type=float, 
-        required=False,
-        default=0.1,
-        help='learning rate (default: 0.01)',
-    )
-
-    parser.add_argument(
-        '-m', '--momentum',
-        type=float, 
-        required=False,
-        default=0.0,
-        help='momentum (default: 0.9)',
-    )
-
-    parser.add_argument(
-        '-g','--decay',
-        type=float, 
-        required=False,
-        default=0.0,
-        help='weight decay gamma (default: 0.01)',
-    )
-
-    parser.add_argument(
-        '--debug',
-        action='store_true',
-        default=False,
-        help='debug mode, prints statements activated (optional)'
+        '-k', '--k-inds',
+        type=int,
+        required=True,
+        help='number of individuals in the population (default: 10)'
     )
 
     # parse arguments
@@ -115,55 +68,32 @@ def main():
     attributes_path = args.attributes
     weights_path = args.weights
     debugging = args.debug
-    
-    # hyperparameters
-    hidden_units = args.hidden_units
-    epochs = args.epochs
-    learning_rate = args.learning_rate
-    decay = args.decay
-    momentum = args.momentum
-    k_folds = args.k_fold
+    k = args.k_inds
 
-
-    print('\nCreating NN with the parameters provided\n')
-    # create the artificial neural network
-    ann = ANN(
-        training_path, # path to training data
-        testing_path, # path to testing data
-        attributes_path, # path to attributes
-        k_folds, # whether to use validation data
-        weights_path, # path to save weights
-        hidden_units, # number of hidden units
-        learning_rate, # learning rate
-        epochs, # number of epochs, -1 for stopping based on validation
-        momentum, # momentum
-        decay, # weight decay gamma
-        debugging # whether to print debugging statements
+    apbt = APBT(
+        k,
+        training_path,
+        testing_path,
+        attributes_path,
+        weights_path,
+        debugging
     )
+
+    print('\nRunning the population based training\n')
+    best_net = apbt.train()
+    print('\nPopulation Based Training complete\n')
+    # create the artificial neural network
     # printing the neural network
-    ann.print_network()
-
-
-    print('\nLearning the NN...\n')
-    # train the artificial neural network
-    ann.train()
-    print('\nTraining complete\n')
-
-    #print weights
     print('\nPrinting learned weights\n')
-    ann.print_weights()
-
+    best_net.print_network()
     # save the weights
     if weights_path:
-        ann.save(weights_path)
+        best_net.save(weights_path)
         print('weights saved to', weights_path)
-        # load the weights
-        # ann.load(weights_path)
-        # print('weights loaded from', weights_path)
 
     # test the artificial neural network
     print('\nTesting the NN...\n')
-    ann.test()
+    best_net.test()
     print('\nTesting complete\n')
 
 

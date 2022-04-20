@@ -9,7 +9,6 @@
 #############################################################
 
 # imports
-from secrets import randbelow
 from ann import ANN
 import random
 
@@ -69,12 +68,14 @@ class APBT:
             ] # list of number of nodes in each layer
         }
 
-        net = ANN(hyperparams=h, 
+        net = ANN(
+            hyperparams=h, 
             training=self.training,
             testing=self.testing,
             attributes=self.attributes,
             weights_path=self.weights_path,
-            debug=self.debug)
+            debug=self.debug
+        )
 
         return net, h
        
@@ -89,22 +90,25 @@ class APBT:
             self.hyperparams[n] = h
 
 
-
+    # TODO: implement
     def step(self, net: ANN, hyperparams: list) -> ANN:
         '''
         Apply one optimization step to the network,
         given the hyperparameters
         '''
-
         pass 
 
+    # TODO: test
     def evaluate(self, net: ANN) -> float:
         '''
         Evaluate the performance of the network
         '''
-        pass
+        for n in range(self.k):
+            net = self.population[n]
+            perf = net.test()
+            self.perfs[n] = perf
 
-
+    # TODO: implement 
     def exploit(self, net: ANN, hyperparams: list, perf: float, population: list) -> tuple(ANN, dict):
         '''
         Exploit the rest of the population 
@@ -112,25 +116,30 @@ class APBT:
         '''
         pass
 
+    # TODO: implement
     def explore(self, net: ANN, hyperparams: list, population: list) -> ANN:
         '''
         Produce new hyperparameters to explore
         '''
         pass
 
+    # TODO: implement
     def is_ready(self, perf: float, timestep: int, population: list) -> bool:
         '''
         Check if the net is ready to exploit
         '''
         pass    
 
+    # TODO: test
     def is_diff(sel, net1, net2) -> bool:
         '''
         Check if the networks are different
         '''
-        pass
+        # check if the weights are different
+        return net1.weights != net2.weights
 
 
+    # TODO: test
     def train(self) -> None:
         '''
         Train the network population

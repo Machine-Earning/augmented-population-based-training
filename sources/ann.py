@@ -649,29 +649,26 @@ class ANN:
         
         # if self.debug:
         #     print('Testing data: ', test_data)
-
         accuracy = 0.0
-
         # test the network
         for instance in test_data:
             # get the output
             output = self.forward(instance[0])
+            # if self.debug:
+            #     print('hidden results: ', self.hidden_res, end='\n')
 
-            if self.debug:
-                print('hidden results: ', self.hidden_res, end='\n')
-
-            if self.debug:
-                print('Output: ', output)
-                print('Target: ', instance[1])
-                print('Loss: ', self.loss(instance[1], output), end='\n')
+            # if self.debug:
+            #     print('Output: ', output)
+            #     print('Target: ', instance[1])
+            #     print('Loss: ', self.loss(instance[1], output), end='\n')
             
             # check if the output is correct
             accuracy += 1.0 - self.loss(instance[1], output)
 
         accuracy /= len(test_data)
 
-        if self.debug:
-            print('Accuracy: ', accuracy * 100, '%')
+        # if self.debug:
+        #     print('Accuracy: ', accuracy * 100, '%')
         
         return accuracy
  
