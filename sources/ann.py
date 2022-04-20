@@ -29,10 +29,8 @@ class ANN:
     def __init__(
         self, 
         hyperparams,
-        training, 
-        testing, 
-        attributes,
-        weights_path,
+        input_units, 
+        output_units, 
         debug=True,
     ) -> None:
         
@@ -40,7 +38,7 @@ class ANN:
         Initialize the Artificial Neural Network
         '''
         
-        self.end_training = False
+        # self.end_training = False
         # hyperparameters
         self.k_fold = hyperparams['k_fold']
         self.hidden_units = hyperparams['hidden_units']
@@ -48,44 +46,16 @@ class ANN:
         self.momentum = hyperparams['momentum']
         self.decay = hyperparams['decay']
         self.epochs = hyperparams['epochs']
-        self.topology = hyperparams['hidden_units'] # ideally dynamically generated
+        self.input_units = input_units
+        self.output_units = output_units
         self.debug = debug
         # self.INIT_VAL = 0.01 # initial value for weights and biases
         self.OFFSET = .05 # offset for early stopping
-        self.weights_path = weights_path
-    
-        # reading attributes 
-        self.attributes, self.in_attr, self.out_attr = self.read_attributes(attributes) 
-
-        # getting total number of input units
-        self.input_units = 0
-        for attr in self.in_attr:
-            values = self.attributes[attr]
-            # check specifically for identity
-            if values[0] == '0' and values[1] == '1':
-                self.input_units += 1
-            else:
-                self.input_units += len(values)
-
-        # getting total number of output units  
-        self.output_units = 0
-        for attr in self.out_attr:
-            values = self.attributes[attr]
-            # check specifically for identity
-            if values[0] == '0' and values[1] == '1':
-                self.output_units += 1
-            else:
-                self.output_units += len(values)
-       
-        # reading data
-        self.training = self.read_data(training)
-        self.testing = self.read_data(testing)
-        self.n_examples = len(self.training)
 
         # initialize the weights at random based 
         # the topology of the network
         self.topology = [self.input_units] + \
-                        self.topology + \
+                        hyperparams['hidden_units'] + \
                         [self.output_units]
 
         self.weights = {
@@ -99,11 +69,6 @@ class ANN:
 
         # print the everything
         if self.debug:
-            print('Training data: ', self.training)
-            print('Testing data: ', self.testing)
-            print('Attributes: ', self.attributes)
-            print('Input attributes: ', self.in_attr)
-            print('Output attributes: ', self.out_attr)
             print('learning rate: ', self.learning_rate)
             print('momentum: ', self.momentum)
             print('epochs: ', self.epochs)
@@ -147,13 +112,27 @@ class ANN:
         print('Network: ', self.topology)
         self.print_weights()
 
+    def set_hyperparams(self, hyperparams):
+        '''
+        Set the hyperparameters of the Artificial Neural Network
+        '''
+        self.k_fold = hyperparams['k_fold']
+        self.learning_rate = hyperparams['learning_rate']
+        self.momentum = hyperparams['momentum']
+        self.decay = hyperparams['decay']
+        self.epochs = hyperparams['epochs']
+        self.hidden_units = hyperparams['hidden_units']
+        self.topology = [self.input_units] + \
+            hyperparams['hidden_units'] + \
+            [self.output_units]
+        
+
     def save(self, filename=None):
         '''
         Save the Artificial Neural Network
         '''
         # if no filename is provided, then use the default
-        if filename is None:
-            filename = self.weights_path
+        filename = filename or 'weights.txt'
         # save the weights onto a file
         with open(filename, 'w') as f:
             f.write(str(self.weights))
@@ -169,164 +148,21 @@ class ANN:
         # print('one weight: ', self.weights['hidden'][0][0])
         self.print_weights()
 
-
-    def read_attributes(self, attr_path):
+    def get_classes(self):
         '''
-        Read in the attributes
+        Get the output classes
         '''
-        attributes = {}
-        in_attr, out_attr = [], []
-        is_input = True
+        
+        num_out = self.output_units
+        classes = [
+            [0.0 for _ in range(num_out)] 
+            for _ in range(num_out)
+        ]
 
-            # read in the attributes
-        with open(attr_path, 'r') as f:
-            for line in f:
-                if len(line) > 1:
-                    words = line.strip().split()
-                    
-                    # storing the attributes
-                    attributes[words[0]] = words[1:]
-
-                    # storing the input attributes
-                    if is_input:
-                        in_attr.append(words[0])
-                    else:
-                        out_attr.append(words[0])
-                    # order.append(words[0])
-                else:
-                    is_input = False
-
-        if self.debug:
-            print('Attributes: ', attributes)
-            print('Input attributes: ', in_attr)
-            print('Output attributes: ', out_attr)
-
-        if len(attributes) == 0:
-            raise Exception('No attributes found')
-
-
-        return attributes, in_attr, out_attr
-
-    def to_encode(self, attr):
-        '''
-        Return true if the value is discrete
-        to encode
-        '''
-        values = self.attributes[attr]
-        # if self.debug:
-        #     print('values: ', values)
-        #     print('the attribute to encode is: ', attr)
-
-        if len(values) > 1:
-            if values[0] == '0' and values[1] == '1':
-                return False
-            else:
-                return True
-        else:
-            return False
-
-    def read_data(self, data_path):
-        '''
-        Read in the training data and testing data
-        '''
-        data = []
-
-        # read in the attributes
-        with open(data_path, 'r') as f:
-            for line in f:
-                if len(line) > 0:
-                    items = line.strip().split()
-                    # get items iterator
-                    items_iter = iter(items)
-
-                    In, Out = [],[]
-                    # get inputs
-                    for attr in self.in_attr:
-                        value = next(items_iter)
-                        if self.to_encode(attr):
-                            # encode discrete values
-                            encoded = self.onehot(attr, value)
-                            In += encoded # since encoded is a list
-                        else:
-                            # encode continuous values
-                            In.append(float(value))
-
-                    # get outputs
-                    for attr in self.out_attr:
-                        value = next(items_iter)
-                        if self.to_encode(attr):
-                            # encode discrete values
-                            encoded = self.onehot(attr, value)
-                            Out += encoded # since encoded is a list
-                        else:
-                            # encode continuous values
-                            Out.append(float(value))
-
-                    # check if the encoding should be applied
-                    # when encoding applied, update the input or output units sizes
-                    data.append([In, Out])
-                    
-                    
-        # if self.debug:
-        #     print('Read data: ', data)
-
-        if len(data) == 0:
-            raise Exception('No data found')
-
-        return data
-
-
-    def onehot(self, attr, value):
-        '''
-        Preprocess to convert a data instance 
-        to one-of-n/onehot encoding
-        '''
-        #Input attributes is discrete
-        # Outlook Sunny Overcast Rain -> Outlook: [a, b, c]
-        # Temperature Hot Mild Cool -> Temperature: [d, e, f]
-        # Humidity High Normal -> Humidity: [g, h]
-        # Wind Weak Strong -> Wind: [i, j]
-        # Concatenate all encoded attributes
-        # [a, b, c, d, e, f, g, h, i, j]
-
-        #Output attributes is discrete
-        # PlayTennis Yes No -> PlayTennis [x,y]
-
-        # input output pairs are 
-        # ([a, b, c, d, e, f, g, h, i, j], [x,y]), ...]
-        # return instance
-
-        # get the index of the value
-        encoded = [0.0 for _ in range(len(self.attributes[attr]))]
-        encoded[self.attributes[attr].index(value)] = 1.0
-
-        if self.debug:
-            print('One-hot encoded: ', encoded)
-
-        return encoded
-
-    def decode(self, attr, encoded):
-        '''
-        Decode the encoded value
-        '''
-        # get the index of the value
-        # value = self.attributes[attr][encoded.index(1.0)]
-        if self.debug:
-            print('Encoded: ', encoded)
-            print('attr: ', attr)
-            print('Attributes: ', self.attributes[attr])
-        value_encoded = zip(self.attributes[attr], encoded)
-        # sort the encoded value
-        sorted_encoded = sorted(value_encoded, key=lambda x: x[1], reverse=True)
-
-        # get the value
-        value = sorted_encoded[0][0]
-
-        if self.debug:
-            print('Decoded: ', value)
-            print('Sorted encoded: ', sorted_encoded)
-
-        return value
+        for i in range(num_out):
+            classes[i][i] = 1.0
+        
+        return classes
 
     def sigmoid(self, x):
         '''
@@ -479,14 +315,17 @@ class ANN:
 
 
     # TODO: added train for step
-    def train(self, train_data=None):
+    def train(self, train_data):
         '''
         Train the Artificial Neural Network
         k is the number of folds
         '''
+        if not train_data:
+            raise ValueError('No training data provided')
 
         # get the data
-        data = train_data or self.training
+        data = train_data
+        # get number of folds
         k = self.k_fold
 
         if k > 1:
@@ -605,7 +444,6 @@ class ANN:
                     # self.backward(instance, output)
                     loss += self.step(instance)
 
-
                 if self.debug:
                     # print('Weights: ', self.weights)
                     print('Loss: ', loss/len(data), end='\n')
@@ -615,7 +453,6 @@ class ANN:
             random.shuffle(data)
             # train the network
             for i in range(self.epochs):
-
                 loss = 0.0
 
                 if self.debug:
@@ -643,10 +480,9 @@ class ANN:
     def test(self, test_data=None):
         '''
         Test the Artificial Neural Network
-        '''
-        # get the data, null check  
-        test_data = test_data or self.testing
-        
+        ''' 
+        if not test_data:
+            raise Exception('No test data provided')
         # if self.debug:
         #     print('Testing data: ', test_data)
         accuracy = 0.0
@@ -672,22 +508,7 @@ class ANN:
         
         return accuracy
  
-
-    def get_classes(self):
-        '''
-        Get the output classes
-        '''
-        
-        num_out = self.output_units
-        classes = [
-            [0.0 for _ in range(num_out)] 
-            for _ in range(num_out)
-        ]
-
-        for i in range(num_out):
-            classes[i][i] = 1.0
-        
-        return classes
+    
 
         
 

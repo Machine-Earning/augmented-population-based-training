@@ -75,7 +75,6 @@ def main():
         training_path,
         testing_path,
         attributes_path,
-        weights_path,
         debugging
     )
 
