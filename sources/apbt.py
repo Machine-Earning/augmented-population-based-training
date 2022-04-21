@@ -49,6 +49,9 @@ class APBT:
         self.testing = self.read_data(testing)
         self.n_examples = len(self.training)
 
+        # generate the population
+        self.generate_population(k)
+
         if self.debug:
             print('Population:', self.population)
             print('Hyperparams:', self.hyperparams)
@@ -220,7 +223,7 @@ class APBT:
         return input_units, output_units
 
     # TODO: test
-    def generate_net(self) -> tuple(ANN, dict):
+    def generate_net(self):
         '''
         Generate a new network
         '''
@@ -270,13 +273,11 @@ class APBT:
         '''
         Evaluate the performance of the network
         '''
-        for n in range(self.k):
-            net = self.population[n]
-            perf = net.test()
-            self.perfs[n] = perf
+        perf = net.test(self.testing)
+        return perf
 
     # TODO: implement 
-    def exploit(self, net: ANN, hyperparams: list, perf: float, population: list) -> tuple(ANN, dict):
+    def exploit(self, net: ANN, hyperparams: list, perf: float, population: list):
         '''
         Exploit the rest of the population 
         to find a better solution
@@ -321,7 +322,7 @@ class APBT:
             # check if the net is ready to exploit
             for e in range(self.epochs):
                 # print the epoch number
-                print('Epoch: ', e)
+                print('Epoch: ', e, end=' ')
                 # optimize the net
                 net = self.step(net, hyperparams)
                 # evaluate the net
@@ -337,8 +338,8 @@ class APBT:
                 # update the population
                 self.population[i] = net
                 self.hyperparams[i] = hyperparams
-                self.perf[i] = perf
-                self.timestep[i] = timestep + 1
+                self.perfs[i] = perf
+                self.timesteps[i] = timestep + 1
             
         # return net with the best performance
         best_perf = max(self.perfs)

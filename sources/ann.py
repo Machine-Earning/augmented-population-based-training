@@ -112,7 +112,7 @@ class ANN:
         print('Network: ', self.topology)
         self.print_weights()
 
-    def set_hyperparams(self, hyperparams):
+    def set_hyperparameters(self, hyperparams):
         '''
         Set the hyperparameters of the Artificial Neural Network
         '''
@@ -288,7 +288,7 @@ class ANN:
                     self.weights[f'W{t}{t-1}'][i][j] += deltas[f'W{t}{t-1}'][i][j]
                 
                 # update the bias
-                deltas[f'W{t}{t-1}'][i][self.topology[t-1]] = factor * errors[f'layer{l}'][i] \
+                deltas[f'W{t}{t-1}'][i][self.topology[t-1]] = factor * errors[f'layer{t}'][i] \
                                     + self.momentum * deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
                 self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] += deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
 
@@ -316,112 +316,112 @@ class ANN:
         # get number of folds
         k = self.k_fold
 
-        if k > 1:
-            # randomly shuffle the data into folds 
-            random.shuffle(data)
-            # get the number of instances
-            num_instances = len(data)
-            while num_instances < k:
-                data = data * k
-                # get the number of instances
-                num_instances = len(data)
-            # get number of data per fold
-            fold_size = num_instances // k
-            # get the folds
-            folds = [
-                data[i:i+fold_size] 
-                for i in range(0, num_instances, fold_size)
-            ]
-            # scores for each fold
-            scores = []
-            iterations = []
+        # if k > 1:
+        #     # randomly shuffle the data into folds 
+        #     random.shuffle(data)
+        #     # get the number of instances
+        #     num_instances = len(data)
+        #     while num_instances < k:
+        #         data = data * k
+        #         # get the number of instances
+        #         num_instances = len(data)
+        #     # get number of data per fold
+        #     fold_size = num_instances // k
+        #     # get the folds
+        #     folds = [
+        #         data[i:i+fold_size] 
+        #         for i in range(0, num_instances, fold_size)
+        #     ]
+        #     # scores for each fold
+        #     scores = []
+        #     iterations = []
 
-            for i in range(k):
-                if self.debug:
-                    print('Fold: ', i)
+        #     for i in range(k):
+        #         if self.debug:
+        #             print('Fold: ', i)
 
-                # get the test fold
-                test_fold = folds[i]
-                # get the train folds
-                train_folds = folds[:i] + folds[i+1:]
-                # merge train folds
-                train_fold = []
-                for fold in train_folds:
-                    train_fold += fold
+        #         # get the test fold
+        #         test_fold = folds[i]
+        #         # get the train folds
+        #         train_folds = folds[:i] + folds[i+1:]
+        #         # merge train folds
+        #         train_fold = []
+        #         for fold in train_folds:
+        #             train_fold += fold
 
-                # get the train data
-                train_data = train_fold
-                # get the test data
-                vali_data = test_fold
-                best_vali_loss, e = float('inf'), 0
+        #         # get the train data
+        #         train_data = train_fold
+        #         # get the test data
+        #         vali_data = test_fold
+        #         best_vali_loss, e = float('inf'), 0
 
-                for i in range(self.epochs):
-                    # get the loss for training data
-                    # train the network
-                    train_loss = 0.0
-                    vali_loss = 0.0
+        #         for i in range(self.epochs):
+        #             # get the loss for training data
+        #             # train the network
+        #             train_loss = 0.0
+        #             vali_loss = 0.0
 
-                    if self.debug:
-                        print('Epoch: ', i, end='')
+        #             if self.debug:
+        #                 print('Epoch: ', i, end='')
 
-                    # shuffle the data
-                    random.shuffle(train_data)
+        #             # shuffle the data
+        #             random.shuffle(train_data)
                     
-                    for instance in train_data:
-                        # get the output
-                        train_loss += self.step(instance)
+        #             for instance in train_data:
+        #                 # get the output
+        #                 train_loss += self.step(instance)
 
-                    for instance in vali_data:
-                        # compute the loss
-                        vali_loss += self.loss(instance[1], self.forward(instance[0]))
-                    v_loss = vali_loss/len(vali_data)
-                    t_loss = train_loss/len(train_data)
+        #             for instance in vali_data:
+        #                 # compute the loss
+        #                 vali_loss += self.loss(instance[1], self.forward(instance[0]))
+        #             v_loss = vali_loss/len(vali_data)
+        #             t_loss = train_loss/len(train_data)
 
-                    if self.debug:
-                        print('\tTrain Loss: ', t_loss, '\tValidation Loss: ', v_loss)
+        #             if self.debug:
+        #                 print('\tTrain Loss: ', t_loss, '\tValidation Loss: ', v_loss)
 
-                    if i == 0 or v_loss < best_vali_loss:
-                        best_vali_loss, e = v_loss, i
-                    elif v_loss > self.OFFSET + best_vali_loss:
-                        scores.append(best_vali_loss)
-                        iterations.append(e)
-                        break
-                    elif i == self.epochs - 1:
-                        scores.append(best_vali_loss)
-                        iterations.append(e)
-            # get the average score
-            avg_score = sum(scores) / len(scores)
-            avg_iter = sum(iterations) / len(iterations)
+        #             if i == 0 or v_loss < best_vali_loss:
+        #                 best_vali_loss, e = v_loss, i
+        #             elif v_loss > self.OFFSET + best_vali_loss:
+        #                 scores.append(best_vali_loss)
+        #                 iterations.append(e)
+        #                 break
+        #             elif i == self.epochs - 1:
+        #                 scores.append(best_vali_loss)
+        #                 iterations.append(e)
+        #     # get the average score
+        #     avg_score = sum(scores) / len(scores)
+        #     avg_iter = sum(iterations) / len(iterations)
 
-            if self.debug:
-                print('Average Score: ', avg_score, '\tAverage Iterations: ', avg_iter)
+        #     if self.debug:
+        #         print('Average Score: ', avg_score, '\tAverage Iterations: ', avg_iter)
             
-            # train net with average iterations
-            for i in range(int(avg_iter)):
-                loss = 0.0
+        #     # train net with average iterations
+        #     for i in range(int(avg_iter)):
+        #         loss = 0.0
 
-                for instance in data:
-                    loss += self.step(instance)
+        #         for instance in data:
+        #             loss += self.step(instance)
 
-                if self.debug:
-                    # print('Weights: ', self.weights)
-                    print('Loss: ', loss/len(data), end='\n')
+        #         if self.debug:
+        #             # print('Weights: ', self.weights)
+        #             print('Loss: ', loss/len(data), end='\n')
 
-        else:
-            # shuffle the data
-            random.shuffle(data)
-            # train the network
-            for i in range(self.epochs):
-                loss = 0.0
-                if self.debug:
-                    print('Epoch: ', i, end='')
+        # else:
+        # shuffle the data
+        random.shuffle(data)
+        # train the network
+        for i in range(self.epochs):
+            loss = 0.0
+            # if self.debug:
+            #     print('Epoch: ', i, end='')
 
-                for instance in data:
-                    loss += self.step(instance)
-                    
-                if self.debug:
-                    # print('Weights: ', self.weights)
-                    print('Loss: ', loss/len(data), end='\n')
+            for instance in data:
+                loss += self.step(instance)
+                
+            if self.debug:
+                # print('Weights: ', self.weights)
+                print('Loss: ', loss/len(data), end='\n')
 
     def test(self, test_data=None):
         '''
