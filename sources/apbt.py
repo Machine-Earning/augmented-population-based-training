@@ -222,7 +222,6 @@ class APBT:
 
         return input_units, output_units
 
-    # TODO: test
     def generate_net(self):
         '''
         Generate a new network
@@ -258,7 +257,6 @@ class APBT:
             self.hyperparams[n] = h
 
 
-    # TODO: implement
     def step(self, net: ANN, hyperparams: dict) -> ANN:
         '''
         Apply one optimization step to the network,
@@ -268,7 +266,6 @@ class APBT:
         net.training_step(self.training)
         return net
 
-    # TODO: test
     def evaluate(self, net: ANN) -> float:
         '''
         Evaluate the performance of the network
@@ -328,12 +325,12 @@ class APBT:
                 # evaluate the net
                 perf = self.evaluate(net)
 
-                # if self.is_ready(perf, timestep, self.population):
-                #     new_net, new_hyperparams = self.exploit(net, hyperparams, perf, self.population)
-                #     # check if the new network is different
-                #     if self.is_diff(new_net, net):
-                #         net, hyperparams = self.explore(new_net, new_hyperparams, self.population)
-                #         perf = self.evaluate(net)
+                if self.is_ready(perf, timestep):
+                    new_net, new_hyperparams = self.exploit(net, hyperparams, perf)
+                    # check if the new network is different
+                    if self.is_diff(new_net, net):
+                        net, hyperparams = self.explore(new_net, new_hyperparams)
+                        perf = self.evaluate(net)
 
                 # update the population
                 self.population[i] = net
