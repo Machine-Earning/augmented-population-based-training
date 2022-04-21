@@ -19,7 +19,7 @@ def main():
     attributes_path = 'data/tennis/tennis-attr.txt'
     weights_path = 'models/weights.txt'
     debugging = True
-    k = 10
+    k = 50
     epochs = 500
 
 

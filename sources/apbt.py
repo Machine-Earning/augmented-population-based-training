@@ -11,6 +11,7 @@
 # imports
 from ann import ANN
 import random
+from copy import deepcopy
 
 # Augmentated Population Based Training
 class APBT:
@@ -32,11 +33,11 @@ class APBT:
         '''
         Initialize the APBT class
         '''
-        self.k = k
+        self.k = k # min = 20
         self.population = [None for _ in range(k)]
         self.hyperparams = [None for _ in range(k)]
         self.perfs = [0.0 for _ in range(k)]
-        self.timesteps = [0 for _ in range(k)]
+        self.last_ready = [0 for _ in range(k)]
         self.epochs = end_training
         self.debug = debug
 
@@ -56,7 +57,7 @@ class APBT:
             print('Population:', self.population)
             print('Hyperparams:', self.hyperparams)
             print('Perfs:', self.perfs)
-            print('Timesteps:', self.timesteps)
+            print('last_ready:', self.last_ready)
             print('Training:', self.training)
             print('Testing:', self.testing)
             print('Number of examples:', self.n_examples)
@@ -232,8 +233,8 @@ class APBT:
             'momentum': random.uniform(0.0, 0.9),
             'decay': random.uniform(0.0, .01),
             'hidden_units': [
-                random.randint(1, 10) 
-                for _ in range(random.randint(1, 6))
+                random.randint(2, 4) 
+                for _ in range(random.randint(1, 1))
             ] # list of number of nodes in each layer
         }
 
@@ -274,29 +275,73 @@ class APBT:
         return perf
 
     # TODO: implement 
-    def exploit(self, net: ANN, hyperparams: list, perf: float, population: list):
+    def exploit(self, net: ANN, hyperparams: dict, perf: float):
         '''
         Exploit the rest of the population 
         to find a better solution
+        truncation selection
         '''
-        pass
+        # get index of net
+        index = self.perfs.index(perf)
+
+        # sort the population by perfs
+        sorted_nets = [i for i in range(self.k)]
+        sorted_nets.sort(key=lambda x: self.perfs[x], reverse=True)
+
+        top = .2 # top 20%
+        bottom = 1 - .2 # bottom 20%
+
+        # check if net is in the bottom 20%
+        if index in sorted_nets[int(self.k * bottom):]:
+            # get the index of one of the top 20%
+            top_index = random.choice(sorted_nets[:int(self.k * top)])
+            # get the index of the top net
+            top_net = self.population[top_index]
+            # get the hyperparameters of the top net
+            top_hyperparams = self.hyperparams[top_index]
+            # replace the current net with the top net
+            
+            return top_net, top_hyperparams
+        else :
+            return net, hyperparams
+
+      
+
 
     # TODO: implement
-    def explore(self, net: ANN, hyperparams: list, population: list) -> ANN:
+    def explore(self, net: ANN, hyperparams: dict) -> tuple:
         '''
-        Produce new hyperparameters to explore
+        Produce new hyperparameters to explore by 
+        perturbing the current hyperparameters
         '''
-        pass
-
-    # TODO: implement
-    def is_ready(self, perf: float, timestep: int, population: list) -> bool:
-        '''
-        Check if the net is ready to exploit
-        '''
-        pass    
+        # randomly perturb the hyperparameters by factor
+        hyperparams['learning_rate'] *= random.choice([.8, 1.2])
+        hyperparams['momentum'] *= random.choice([.8, 1.2])
+        hyperparams['decay'] *= random.choice([.8, 1.2])
+        # hyperparams['k_fold'] *= choice([.8, 1.2])
+        # hyperparams['hidden_units'] = [
+        #     random.randint(1, 10) 
+        #     for _ in range(random.randint(1, 6))
+        # ]
+        return net, hyperparams
 
     # TODO: test
-    def is_diff(sel, net1, net2) -> bool:
+    def is_ready(self, last_ready: int, timestep: int, perf: float) -> bool:
+        '''
+        Check if the net is ready to exploit and explore
+        after a certain number of last_ready since last ready
+        '''
+        READINESS = 10 # 10 timesteps
+
+        if timestep - last_ready > READINESS:
+            # might need to check if the performance is good enough
+            return True
+  
+        return False
+            
+
+    # TODO: test
+    def is_diff(sel, net1: ANN, net2: ANN) -> bool:
         '''
         Check if the networks are different
         '''
@@ -309,23 +354,22 @@ class APBT:
         '''
         Train the network population
         '''
-        for i in range(self.k):
-            # getting a net of the population
-            net = self.population[i]
-            hyperparams = self.hyperparams[i]
-            perf = self.perfs[i]
-            timestep = self.timesteps[i]
-
-            # check if the net is ready to exploit
-            for e in range(self.epochs):
-                # print the epoch number
-                print('Epoch: ', e, end=' ')
+        for e in range(self.epochs):
+            # print the epoch number
+            print('Epoch: ', e, end=' ')
+            for i in range(self.k):
+                # getting a net of the population
+                net = self.population[i]
+                hyperparams = self.hyperparams[i]
+                perf = self.perfs[i]
+                last = self.last_ready[i]
                 # optimize the net
                 net = self.step(net, hyperparams)
                 # evaluate the net
                 perf = self.evaluate(net)
 
-                if self.is_ready(perf, timestep):
+                # check if the net is ready to exploit and explore
+                if self.is_ready(last, e, perf):
                     new_net, new_hyperparams = self.exploit(net, hyperparams, perf)
                     # check if the new network is different
                     if self.is_diff(new_net, net):
@@ -333,10 +377,10 @@ class APBT:
                         perf = self.evaluate(net)
 
                 # update the population
-                self.population[i] = net
-                self.hyperparams[i] = hyperparams
+                self.population[i] = deepcopy(net)
+                self.hyperparams[i] = deepcopy(hyperparams)
                 self.perfs[i] = perf
-                self.timesteps[i] = timestep + 1
+                self.last_ready[i] = last + 1
             
         # return net with the best performance
         best_perf = max(self.perfs)
