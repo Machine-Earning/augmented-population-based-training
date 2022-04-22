@@ -233,8 +233,8 @@ class APBT:
             'momentum': random.uniform(0.0, 0.9),
             'decay': random.uniform(0.0, .01),
             'hidden_units': [
-                random.randint(2, 4) 
-                for _ in range(random.randint(1, 1))
+                random.randint(2, 5) 
+                for _ in range(random.randint(1, 2))
             ] # list of number of nodes in each layer
         }
 
@@ -318,11 +318,38 @@ class APBT:
         hyperparams['learning_rate'] *= random.choice([.8, 1.2])
         hyperparams['momentum'] *= random.choice([.8, 1.2])
         hyperparams['decay'] *= random.choice([.8, 1.2])
-        # hyperparams['k_fold'] *= choice([.8, 1.2])
-        # hyperparams['hidden_units'] = [
-        #     random.randint(1, 10) 
-        #     for _ in range(random.randint(1, 6))
-        # ]
+
+        # randomly perturb the topology
+        rng_index = random.randint(1, len(net.topology) - 2)
+        # randomly add or remove a unit
+        rng_choice = random.choice([-1, 1])
+        hyperparams['hidden_units'][rng_index] += rng_choice
+
+        # adjust the weights based on changed topology
+        if rng_choice == -1:
+            # remove weight associated with removed unit
+            # choose a random unit to remove
+            rng_unit = random.randint(0, net.topology[rng_index] - 1)
+            # row weight
+            net.weights[f'W{rng_index}{rng_index-1}'].remove(rng_unit)
+            # column weight
+            for r in range(net.topology[rng_index+1]):
+                net.weights[f'W{rng_index+1}{rng_index}'][r].remove(rng_unit)
+            # remove the unit
+            net.topology[rng_index] -= 1
+
+        else: # rng_choice = 1
+            # add weight associated with added unit
+            # rng_unit = net.topology[rng_index]
+            # row weight
+            net.weights[f'W{rng_index}{rng_index-1}'].append([
+                net.rand_init() for _ in range(1+net.topology[rng_index-1])])
+            # column weight
+            for r in range(net.topology[rng_index+1]):
+                net.weights[f'W{rng_index+1}{rng_index}'][r].append(net.rand_init())
+            # add the unit
+            net.topology[rng_index] += 1            
+
         return net, hyperparams
 
     # TODO: test
