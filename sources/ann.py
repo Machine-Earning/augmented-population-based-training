@@ -32,7 +32,7 @@ class ANN:
         input_units, 
         output_units, 
         debug=True,
-    ) -> None:
+    ):
         
         '''
         Initialize the Artificial Neural Network
@@ -75,7 +75,7 @@ class ANN:
             print('Weights: ', self.weights)
             print('Topology: ', self.topology)
 
-    def rand_init(self) -> float:
+    def rand_init(self):
         '''
         Initialize the weights at random
         https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/
@@ -124,7 +124,15 @@ class ANN:
         self.topology = [self.input_units] + \
             hyperparams['hidden_units'] + \
             [self.output_units]
-        
+    
+    def get_num_parameters(self):
+        '''
+        Get the number of parameters
+        '''
+        num_parameters = 0
+        for _, value in self.weights.items():
+            num_parameters += len(value) * len(value[0])
+        return num_parameters
 
     def save(self, filename=None):
         '''

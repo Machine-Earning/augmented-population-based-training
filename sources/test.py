@@ -14,13 +14,13 @@ from apbt import APBT
 def main():
     '''main of the program'''
 
-    training_path = 'data/tennis/tennis-train.txt'
-    testing_path = 'data/tennis/tennis-test.txt'
-    attributes_path = 'data/tennis/tennis-attr.txt'
+    training_path = 'data/iris/iris-train.txt'
+    testing_path = 'data/iris/iris-test.txt'
+    attributes_path = 'data/iris/iris-attr.txt'
     weights_path = 'models/weights.txt'
     debugging = True
     k = 50
-    epochs = 500
+    epochs = 200
 
 
     apbt = APBT(
@@ -46,9 +46,11 @@ def main():
 
     # test the artificial neural network
     print('\nTesting the NN...\n')
-    accuracy = 100 * apbt.evaluate(best_net)
+    accuracy = 100 * best_net.test(apbt.testing)
+    n_params = best_net.get_num_parameters()
     print('\nTesting complete\n')
     print(f'\nAccuracy: {accuracy:.2f}%\n')
+    print(f'Number of parameters: {n_params}\n')
 
 
     

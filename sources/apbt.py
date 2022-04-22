@@ -24,12 +24,12 @@ class APBT:
     
     def __init__(
         self, 
-        k: int, 
-        end_training: int,
-        training: str, 
-        testing: str, 
-        attributes: str, 
-        debug) -> None:
+        k, 
+        end_training,
+        training, 
+        testing, 
+        attributes, 
+        debug):
         '''
         Initialize the APBT class
         '''
@@ -233,8 +233,8 @@ class APBT:
             'momentum': random.uniform(0.0, 0.9),
             'decay': random.uniform(0.0, .01),
             'hidden_units': [
-                random.randint(2, 5) 
-                for _ in range(random.randint(1, 2))
+                random.randint(2, 6) 
+                for _ in range(random.randint(1, 4))
             ] # list of number of nodes in each layer
         }
 
@@ -248,7 +248,7 @@ class APBT:
         return net, h
        
 
-    def generate_population(self, population_size: int):
+    def generate_population(self, population_size):
         '''
         Generate the population of neural networks
         '''
@@ -258,7 +258,7 @@ class APBT:
             self.hyperparams[n] = h
 
 
-    def step(self, net: ANN, hyperparams: dict) -> ANN:
+    def step(self, net, hyperparams):
         '''
         Apply one optimization step to the network,
         given the hyperparameters
@@ -267,15 +267,16 @@ class APBT:
         net.training_step(self.training)
         return net
 
-    def evaluate(self, net: ANN) -> float:
+    def evaluate(self, net):
         '''
         Evaluate the performance of the network
         '''
-        perf = net.test(self.testing)
+        n = net.get_num_parameters()
+        perf = net.test(self.testing) / n ** .5
         return perf
 
-    # TODO: implement 
-    def exploit(self, net: ANN, hyperparams: dict, perf: float):
+    # TODO: test 
+    def exploit(self, net, hyperparams, perf):
         '''
         Exploit the rest of the population 
         to find a better solution
@@ -308,8 +309,8 @@ class APBT:
       
 
 
-    # TODO: implement
-    def explore(self, net: ANN, hyperparams: dict) -> tuple:
+    # TODO: test
+    def explore(self, net, hyperparams):
         '''
         Produce new hyperparameters to explore by 
         perturbing the current hyperparameters
@@ -353,7 +354,7 @@ class APBT:
         return net, hyperparams
 
     # TODO: test
-    def is_ready(self, last_ready: int, timestep: int, perf: float) -> bool:
+    def is_ready(self, last_ready, timestep, perf):
         '''
         Check if the net is ready to exploit and explore
         after a certain number of last_ready since last ready
@@ -368,7 +369,7 @@ class APBT:
             
 
     # TODO: test
-    def is_diff(sel, net1: ANN, net2: ANN) -> bool:
+    def is_diff(sel, net1, net2):
         '''
         Check if the networks are different
         '''
@@ -377,7 +378,7 @@ class APBT:
 
 
     # TODO: test
-    def train(self) -> None:
+    def train(self):
         '''
         Train the network population
         '''
