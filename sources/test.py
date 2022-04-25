@@ -14,13 +14,13 @@ from apbt import APBT
 def main():
     '''main of the program'''
 
-    training_path = 'data/iris/iris-train.txt'
-    testing_path = 'data/iris/iris-test.txt'
-    attributes_path = 'data/iris/iris-attr.txt'
+    training_path = 'data/tennis/tennis-train.txt'
+    testing_path = 'data/tennis/tennis-test.txt'
+    attributes_path = 'data/tennis/tennis-attr.txt'
     weights_path = 'models/weights.txt'
     debugging = True
-    k = 80 # number good number
-    epochs = 300
+    k = 80 # population size, 80 good number
+    epochs = 400 # number of epochs
 
 
     apbt = APBT(

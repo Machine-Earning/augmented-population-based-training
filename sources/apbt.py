@@ -64,6 +64,7 @@ class APBT:
         self.PERTS = (0.8, 1.2) # perturbations
         self.READINESS = 10 # number of epochs to wait before exploitation
         self.TRUNC = .2 # truncation threshold
+        self.X, self.Y = 1.08, 1.05 # scaling factor
     
         # generate the population
         self.generate_population(k)
@@ -302,8 +303,7 @@ class APBT:
         Fitness function
         '''
         # reward for accuracy, penalty for size
-        X, Y = 1.08, 1.03
-        return X ** (acc * 100) / Y ** size
+        return self.X ** (acc * 100) / self.Y ** size
 
     # TODO: test 
     def exploit(self, net, hyperparams, perf):
