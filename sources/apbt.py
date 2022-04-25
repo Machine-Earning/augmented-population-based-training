@@ -37,6 +37,7 @@ class APBT:
         self.population = [None for _ in range(k)]
         self.hyperparams = [None for _ in range(k)]
         self.perfs = [0.0 for _ in range(k)]
+        self.accuracies = [0.0 for _ in range(k)]
         self.last_ready = [0 for _ in range(k)]
         self.epochs = end_training
         self.debug = debug
@@ -62,7 +63,7 @@ class APBT:
         self.PERTS = (0.8, 1.2) # perturbations
         self.READINESS = 10 # number of epochs to wait before exploitation
         self.TRUNC = .2 # truncation threshold
-        self.X, self.Y = 1e3, 1e-3
+    
         # generate the population
         self.generate_population(k)
 
@@ -290,10 +291,16 @@ class APBT:
         '''
         size = net.num_params()
         accuracy = net.test(self.validation)
-        perf = self.X * accuracy + self.Y * size
+        perf = self.f(acc=accuracy, size=size)
         print(f' | perf: {perf:.3f} | size: {size} | accuracy: {accuracy:.3f}', end='\n')
         return perf
 
+    # try to figure out what f should be
+    def f(self, acc, size):
+        '''
+        Fitness function
+        '''
+        return 1.07 ** (acc * 100) / 1.03 ** size
     # TODO: test 
     def exploit(self, net, hyperparams, perf):
         '''
