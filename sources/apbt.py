@@ -298,9 +298,9 @@ class APBT:
             # get the index of one of the top 20%
             top_index = random.choice(sorted_nets[:int(self.k * top)])
             # get the index of the top net
-            top_net = self.population[top_index]
+            top_net = deepcopy(self.population[top_index])
             # get the hyperparameters of the top net
-            top_hyperparams = self.hyperparams[top_index]
+            top_hyperparams = deepcopy(self.hyperparams[top_index])
             # replace the current net with the top net
             return top_net, top_hyperparams
         else :
@@ -360,11 +360,11 @@ class APBT:
         after a certain number of last_ready since last ready
         '''
         READINESS = 5 # 10 timesteps
-
+        # checking the readiness
         if timestep - last_ready > READINESS:
             # might need to check if the performance is good enough
             return True
-  
+        # by default not ready
         return False
             
 
