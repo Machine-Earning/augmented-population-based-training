@@ -59,7 +59,7 @@ class APBT:
         self.D_RANGE = (.0, .1) # decay
         self.HL_RANGE = (1, 4) # hidden layers
         self.HUPL_RANGE = (2, 10) # hidden units per layer
-        self.PERTS = (0.8, 1.2) # perturbations
+        self.PERTS = (0.5, 1.5) # perturbations
         self.READINESS = 10 # number of epochs to wait before exploitation
         self.TRUNC = .2 # truncation threshold
         # generate the population
@@ -310,7 +310,7 @@ class APBT:
         sorted_nets.sort(key=lambda x: self.perfs[x], reverse=True)
 
         top = self.TRUNC # top 20%
-        bottom = 1- self.TRUNC # bottom 20%
+        bottom = 1 - self.TRUNC # bottom 20%
 
         # check if net is in the bottom 20%
         if index in sorted_nets[int(self.k * bottom):]:
