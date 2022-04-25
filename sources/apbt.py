@@ -59,7 +59,7 @@ class APBT:
         self.D_RANGE = (.0, .1) # decay
         self.HL_RANGE = (1, 4) # hidden layers
         self.HUPL_RANGE = (2, 10) # hidden units per layer
-        self.PERTS = (0.5, 1.5) # perturbations
+        self.PERTS = (0.8, 1.2) # perturbations
         self.READINESS = 10 # number of epochs to wait before exploitation
         self.TRUNC = .2 # truncation threshold
         # generate the population
@@ -429,7 +429,8 @@ class APBT:
             self.best = self.get_best()
 
             # print the best net so far
-            print(f'Current best net: {self.best}', end='\n')
+            print(f'Current best net perf: {self.best[1]:.2f}', end='\n')
+            print(f'Current best net hyperparameters: {self.best[2]}', end='\n')
             
         # return net with the best performance
         best_perf = max(self.perfs)
