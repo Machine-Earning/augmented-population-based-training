@@ -301,7 +301,9 @@ class APBT:
         '''
         Fitness function
         '''
-        return 1.07 ** (acc * 100) / 1.03 ** size
+        # reward for accuracy, penalty for size
+        X, Y = 1.08, 1.03
+        return X ** (acc * 100) / Y ** size
 
     # TODO: test 
     def exploit(self, net, hyperparams, perf):
