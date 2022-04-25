@@ -19,7 +19,7 @@ def main():
     attributes_path = 'data/iris/iris-attr.txt'
     weights_path = 'models/weights.txt'
     debugging = True
-    k = 60
+    k = 80
     epochs = 1000
 
 

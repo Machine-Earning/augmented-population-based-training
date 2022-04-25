@@ -6,14 +6,12 @@
 #   file: ann.py
 #   Description: main class for artificial neural network
 #   Implementation of backpropagation algorithm for a 
-#   feed forward neural network with one hidden layer
+#   feed forward neural network
 #   input parameters are:
 #   - learning rate
-#   - number of epochs
 #   - momentum
 #   - weight decay
-#   - number of folds for k-fold cross validation
-#   - Architecture or topology of the network: encoded as
+#   - topology of the network: encoded as
 #   a list of integers where each integer represents the
 #   number of nodes in the respective layer
 #############################################################
@@ -28,6 +26,7 @@ class ANN:
     '''
     def __init__(
         self, 
+        net_id,
         hyperparams,
         input_units, 
         output_units, 
@@ -37,20 +36,15 @@ class ANN:
         '''
         Initialize the Artificial Neural Network
         '''
-        
-        # self.end_training = False
         # hyperparameters
-        # self.k_fold = hyperparams['k_fold']
+        self.net_id = net_id
         self.hidden_units = hyperparams['hidden_units']
         self.learning_rate = hyperparams['learning_rate']
         self.momentum = hyperparams['momentum']
         self.decay = hyperparams['decay']
-        self.epochs = 1
         self.input_units = input_units
         self.output_units = output_units
         self.debug = debug
-        # self.INIT_VAL = 0.01 # initial value for weights and biases
-        self.OFFSET = .05 # offset for early stopping
 
         # initialize the weights at random based 
         # the topology of the network
@@ -72,7 +66,6 @@ class ANN:
         if self.debug:
             print('learning rate: ', self.learning_rate)
             print('momentum: ', self.momentum)
-            # print('epochs: ', self.epochs)
             print('Weights: ', self.weights)
             print('Topology: ', self.topology)
 
@@ -117,7 +110,6 @@ class ANN:
         '''
         Set the hyperparameters of the Artificial Neural Network
         '''
-        # self.k_fold = hyperparams['k_fold']
         self.learning_rate = hyperparams['learning_rate']
         self.momentum = hyperparams['momentum']
         self.decay = hyperparams['decay']
@@ -255,11 +247,6 @@ class ANN:
         decay and learning rate
         SGD
         '''
-        # if self.debug:
-        #     print('inputs: ', inputs)
-        #     print('Target: ', target)
-        #     print('Output: ', output)
-
         # prior delta update
         errors = {
             f'layer{l}': [0.0 for _ in range(self.topology[l])]
@@ -275,7 +262,7 @@ class ANN:
                     for j in range(self.topology[l+1]):
                         errors[f'layer{l}'][i] += errors[f'layer{l+1}'][j] * \
                             self.weights[f'W{l+1}{l}'][j][i]
-
+                # applying the activation function derivative
                 errors[f'layer{l}'][i] *= self.d_sigmoid(self.res[f'layer{l}'][i])
 
         return errors
@@ -289,7 +276,6 @@ class ANN:
                     for _ in range(self.topology[i])] 
                 for i in range(1, len(self.topology))
         }
-
         # update the weights
         for t in range(1, len(self.topology)):
             for i in range(self.topology[t]):
@@ -306,7 +292,6 @@ class ANN:
                 self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] = (1 - self.learning_rate * self.decay) * \
                     self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] + deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
 
-    # TODO: not sure about this
     def training_step(self, train_data):
         '''
         Train the Artificial Neural Network
@@ -316,109 +301,46 @@ class ANN:
             raise ValueError('No training data provided')
         # get the data
         data = train_data
-        # get number of folds
-        # k = self.k_fold
-
-        # if k > 1:
-        #     # randomly shuffle the data into folds 
-        #     random.shuffle(data)
-        #     # get the number of instances
-        #     num_instances = len(data)
-        #     while num_instances < k:
-        #         data = data * k
-        #         # get the number of instances
-        #         num_instances = len(data)
-        #     # get number of data per fold
-        #     fold_size = num_instances // k
-        #     # get the folds
-        #     folds = [
-        #         data[i:i+fold_size] 
-        #         for i in range(0, num_instances, fold_size)
-        #     ]
-        #     # scores for each fold
-        #     scores = []
-        #     iterations = []
-
-        #     for i in range(k):
-        #         if self.debug:
-        #             print('Fold: ', i)
-
-        #         # get the test fold
-        #         test_fold = folds[i]
-        #         # get the train folds
-        #         train_folds = folds[:i] + folds[i+1:]
-        #         # merge train folds
-        #         train_fold = []
-        #         for fold in train_folds:
-        #             train_fold += fold
-
-        #         # get the train data
-        #         train_data = train_fold
-        #         # get the test data
-        #         vali_data = test_fold
-        #         best_vali_loss, e = float('inf'), 0
-
-        #         for i in range(self.epochs):
-        #             # get the loss for training data
-        #             # train the network
-        #             train_loss = 0.0
-        #             vali_loss = 0.0
-
-        #             if self.debug:
-        #                 print('Epoch: ', i, end='')
-
-        #             # shuffle the data
-        #             random.shuffle(train_data)
-                    
-        #             for instance in train_data:
-        #                 # get the output
-        #                 train_loss += self.step(instance)
-
-        #             for instance in vali_data:
-        #                 # compute the loss
-        #                 vali_loss += self.loss(instance[1], self.forward(instance[0]))
-        #             v_loss = vali_loss/len(vali_data)
-        #             t_loss = train_loss/len(train_data)
-
-        #             if self.debug:
-        #                 print('\tTrain Loss: ', t_loss, '\tValidation Loss: ', v_loss)
-
-        #             if i == 0 or v_loss < best_vali_loss:
-        #                 best_vali_loss, e = v_loss, i
-        #             elif v_loss > self.OFFSET + best_vali_loss:
-        #                 scores.append(best_vali_loss)
-        #                 iterations.append(e)
-        #                 break
-        #             elif i == self.epochs - 1:
-        #                 scores.append(best_vali_loss)
-        #                 iterations.append(e)
-        #     # get the average score
-        #     avg_score = sum(scores) / len(scores)
-        #     avg_iter = sum(iterations) / len(iterations)
-
-        #     if self.debug:
-        #         print('Average Score: ', avg_score, '\tAverage Iterations: ', avg_iter)
-            
-        #     # train net with average iterations
-        #     for i in range(int(avg_iter)):
-        #         loss = 0.0
-
-        #         for instance in data:
-        #             loss += self.step(instance)
-
-        #         if self.debug:
-        #             # print('Weights: ', self.weights)
-        #             print('Loss: ', loss/len(data), end='\n')
-
-        # else:
         # shuffle the data
         random.shuffle(data)
         # train the network
-        for _ in range(self.epochs):
-            loss = 0.0
+        loss = 0.0
+        # if self.debug:
+        #     print('Epoch: ', i, end='')
+        for example in data:
+            # loss += self.step(instance)
+            inputt, target = example[0], example[1]
+            # get the output
+            output = self.forward(inputt)
+            # compute the loss
+            loss += self.loss(target, output)
+            # backpropagate the errors
+            errors = self.backward(target, output)
+            # update the weights
+            self.step(errors)
+            
+        if self.debug:
+            # print('Weights: ', self.weights)
+            print(f'Net #{self.net_id}\'s loss: {loss/len(data): .3f}', end='')
+
+        return loss/len(data)
+
+    def train(self, train_data, epochs=10):
+        '''
+        Train the Artificial Neural Network
+        k is the number of folds
+        '''
+        if not train_data:
+            raise ValueError('No training data provided')
+        # get the data
+        data = train_data
+        # shuffle the data
+        random.shuffle(data)
+        # train the network
+        for _ in range(epochs):
             # if self.debug:
             #     print('Epoch: ', i, end='')
-
+            loss = 0.0
             for example in data:
                 # loss += self.step(instance)
                 inputt, target = example[0], example[1]
@@ -430,10 +352,145 @@ class ANN:
                 errors = self.backward(target, output)
                 # update the weights
                 self.step(errors)
+            
+            if self.debug:
+                # print('Weights: ', self.weights)
+                print(f'Net #{self.net_id}\'s loss: {loss/len(data)}', end='\n')
+
+        return loss/len(data)
+
+    def train_with_folds(self, train_data, epochs=1000, k=5):
+        '''
+        Train the Artificial Neural Network
+        k is the number of folds
+        '''
+        if not train_data:
+            raise ValueError('No training data provided')
+        # get the data
+        data = train_data
+        # shuffle the data
+        if k < 2:
+            raise ValueError('k must be greater than 1')
+
+        # randomly shuffle the data into folds 
+        random.shuffle(data)
+        
+        # get the number of instances
+        num_instances = len(data)
+
+        while num_instances < k:
+            data = data * k
+            # get the number of instances
+            num_instances = len(data)
+
+        # if self.debug:
+        #     print('data: ', data)
+
+        # get number of data per fold
+        fold_size = num_instances // k
+
+        # get the folds
+        folds = [
+            data[i:i+fold_size] for i in range(0, num_instances, fold_size)
+        ]
+
+        # scores for each fold
+        scores = []
+        iterations = []
+
+        for i in range(k):
+
+            if self.debug:
+                print('Fold: ', i)
+
+            # get the test fold
+            test_fold = folds[i]
+            # get the train folds
+            train_folds = folds[:i] + folds[i+1:]
+
+            # merge train folds
+            train_fold = []
+            for fold in train_folds:
+                train_fold += fold
+
+            # get the train data
+            train_data = train_fold
+            # get the test data
+            validation_data = test_fold
+
+            best_validation_loss, e = float('inf'), 0
+
+            for i in range(epochs):
+                # get the loss for training data
+                # train the network
+                train_loss = 0.0
+                validation_loss = 0.0
+
+                if self.debug:
+                    print('Epoch: ', i, end='')
+
+                # shuffle the data
+                random.shuffle(train_data)
                 
+                for instance in train_data:
+                    # loss += self.step(instance)
+                    inputt, target = instance[0], instance[1]
+                    # get the output
+                    output = self.forward(inputt)
+                    # compute the loss
+                    train_loss += self.loss(target, output)
+                    # backpropagate the errors
+                    errors = self.backward(target, output)
+                    # update the weights
+                    self.step(errors)
+
+                for instance in validation_data:
+                    # get the output
+                    output = self.feed_forward(instance[0])
+                    # compute the loss
+                    validation_loss += self.loss(instance[1], output)
+
+                v_loss = validation_loss/len(validation_data)
+                t_loss = train_loss/len(train_data)
+
+                if self.debug:
+                    print('\tTrain Loss: ', t_loss, '\tValidation Loss: ', v_loss)
+
+                if i == 0 or v_loss < best_validation_loss:
+                    best_validation_loss, e = v_loss, i
+                elif v_loss > self.OFFSET + best_validation_loss:
+                    scores.append(best_validation_loss)
+                    iterations.append(e)
+                    break
+                elif i == self.epochs - 1:
+                    scores.append(best_validation_loss)
+                    iterations.append(e)
+
+        # get the average score
+        avg_score = sum(scores) / len(scores)
+        avg_iter = sum(iterations) / len(iterations)
+
+        if self.debug:
+            print('Average Score: ', avg_score, '\tAverage Iterations: ', avg_iter)
+        
+        # train net with average iterations
+        for i in range(int(avg_iter)):
+            loss = 0.0
+
+            for instance in data:
+                # get the output
+                output = self.forward(instance[0])
+                # compute the loss
+                loss += self.loss(instance[1], output)
+                # backpropagate the errors
+                errors = self.backward(instance[1], output)
+                # update the weights
+                self.step(errors)
+
             if self.debug:
                 # print('Weights: ', self.weights)
                 print('Loss: ', loss/len(data), end='\n')
+
 
     def test(self, test_data=None):
         '''

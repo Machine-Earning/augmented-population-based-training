@@ -141,9 +141,6 @@ class APBT:
         encoded = [0.0 for _ in range(len(self.attributes[attr]))]
         encoded[self.attributes[attr].index(value)] = 1.0
 
-        if self.debug:
-            print('One-hot encoded: ', encoded)
-
         return encoded
 
     def read_data(self, data_path):
@@ -241,7 +238,7 @@ class APBT:
 
         return input_units, output_units
 
-    def generate_net(self):
+    def generate_net(self, idx):
         '''
         Generate a new network
         '''
@@ -257,6 +254,7 @@ class APBT:
         }
 
         net = ANN(
+            net_id=idx,
             hyperparams=h, 
             input_units=self.input_units,
             output_units=self.output_units,
@@ -271,7 +269,7 @@ class APBT:
         Generate the population of neural networks
         '''
         for n in range(population_size):
-            net, h = self.generate_net()
+            net, h = self.generate_net(n)
             self.population[n] = net
             self.hyperparams[n] = h
 
@@ -292,7 +290,7 @@ class APBT:
         size = net.num_params()
         accuracy = net.test(self.validation)
         perf = (100 * accuracy) ** 2 / size
-        # print('perf: ', perf)
+        print(f' | perf: {perf:.3f} | size: {size} | accuracy: {accuracy:.3f}', end='\n')
         return perf
 
     # TODO: test 
@@ -360,8 +358,6 @@ class APBT:
             net.topology[rng_index] -= 1
 
         else: # rng_choice = 1
-            # add weight associated with added unit
-            # rng_unit = net.topology[rng_index]
             # row weight
             net.weights[f'W{rng_index}{rng_index-1}'].append([
                 net.rand_init() for _ in range(1+net.topology[rng_index-1])])
@@ -431,6 +427,9 @@ class APBT:
             
             # get best net so far 
             self.best = self.get_best()
+
+            # print the best net so far
+            print(f'Current best net: {self.best}', end='\n')
             
         # return net with the best performance
         best_perf = max(self.perfs)
@@ -439,7 +438,6 @@ class APBT:
         # check if the best net is better than best known net
         if best_perf > self.best[1]:
             self.best = (best_net, best_perf, hyperparams)
-
 
         return self.best
         

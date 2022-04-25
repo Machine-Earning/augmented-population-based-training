@@ -102,8 +102,12 @@ def main():
 
     # test the artificial neural network
     print('\nTesting the NN...\n')
-    best_net.test()
+    accuracy = 100 * best_net.test(apbt.testing)
+    n_params = best_net.num_params()
     print('\nTesting complete\n')
+    print(f'\nAccuracy: {accuracy:.2f}%\n')
+    print(f'Number of parameters: {n_params}\n')
+
 
 
     
