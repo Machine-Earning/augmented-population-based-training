@@ -62,7 +62,7 @@ class APBT:
         self.HL_RANGE = (1, 4) # hidden layers
         self.HUPL_RANGE = (2, 10) # hidden units per layer
         self.PERTS = (0.8, 1.2) # perturbations
-        self.READINESS = 60 # number of epochs to wait before exploitation
+        self.READINESS = 100 # number of epochs to wait before exploitation
         self.TRUNC = .2 # truncation threshold
         self.X, self.Y = 1.09, 1.02 # scaling factor
     
