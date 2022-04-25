@@ -19,8 +19,8 @@ def main():
     attributes_path = 'data/iris/iris-attr.txt'
     weights_path = 'models/weights.txt'
     debugging = True
-    k = 50
-    epochs = 200
+    k = 80
+    epochs = 1000
 
 
     apbt = APBT(

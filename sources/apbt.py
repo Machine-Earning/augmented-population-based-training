@@ -233,7 +233,7 @@ class APBT:
             'momentum': random.uniform(0.0, 0.9),
             'decay': random.uniform(0.0, .01),
             'hidden_units': [
-                random.randint(2, 6) 
+                random.randint(2, 10) 
                 for _ in range(random.randint(1, 4))
             ] # list of number of nodes in each layer
         }
@@ -272,7 +272,8 @@ class APBT:
         Evaluate the performance of the network
         '''
         n = net.get_num_parameters()
-        perf = net.test(self.testing) / n ** .5
+        accuracy = net.test(self.testing)
+        perf = accuracy / n ** 0.5
         return perf
 
     # TODO: test 
@@ -384,7 +385,7 @@ class APBT:
         '''
         for e in range(self.epochs):
             # print the epoch number
-            print('Epoch: ', e, end=' ')
+            print('Epoch: ', e, end='\n')
             for i in range(self.k):
                 # getting a net of the population
                 net = self.population[i]
