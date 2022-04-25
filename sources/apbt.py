@@ -62,6 +62,7 @@ class APBT:
         self.PERTS = (0.8, 1.2) # perturbations
         self.READINESS = 10 # number of epochs to wait before exploitation
         self.TRUNC = .2 # truncation threshold
+        self.X, self.Y = 1e3, 1e-3
         # generate the population
         self.generate_population(k)
 
@@ -289,7 +290,7 @@ class APBT:
         '''
         size = net.num_params()
         accuracy = net.test(self.validation)
-        perf = (100 * accuracy) ** 2 / size
+        perf = self.X * accuracy + self.Y * size
         print(f' | perf: {perf:.3f} | size: {size} | accuracy: {accuracy:.3f}', end='\n')
         return perf
 
