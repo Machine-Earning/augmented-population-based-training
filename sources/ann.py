@@ -244,7 +244,7 @@ class ANN:
                 for j in range(len(self.weights[f'W{l}{l-1}'][i])):
                     w_term += self.weights[f'W{l}{l-1}'][i][j] ** 2
 
-        loss += self.decay * w_term
+        loss += self.decay * (w_term / (self.get_num_parameters() * 2))
 
         return loss
 
@@ -283,22 +283,21 @@ class ANN:
 
                 errors[f'layer{l}'][i] *= self.d_sigmoid(self.res[f'layer{l}'][i])
 
-        # weight update factor based on decay
-        factor = 1 - 2 * self.learning_rate * self.decay
-
         # update the weights
         for t in range(1, len(self.topology)):
             for i in range(self.topology[t]):
                 for j in range(self.topology[t-1]):
                     # update the weights
-                    deltas[f'W{t}{t-1}'][i][j] = factor * errors[f'layer{t}'][i] * self.res[f'layer{t-1}'][j] \
-                                    + self.momentum * deltas[f'W{t}{t-1}'][i][j]
-                    self.weights[f'W{t}{t-1}'][i][j] += deltas[f'W{t}{t-1}'][i][j]
+                    deltas[f'W{t}{t-1}'][i][j] = self.learning_rate * errors[f'layer{t}'][i] * \
+                        self.res[f'layer{t-1}'][j] + self.momentum * deltas[f'W{t}{t-1}'][i][j]
+                    self.weights[f'W{t}{t-1}'][i][j] = (1 - self.learning_rate * self.decay) * \
+                        self.weights[f'W{t}{t-1}'][i][j] + deltas[f'W{t}{t-1}'][i][j]
                 
                 # update the bias
-                deltas[f'W{t}{t-1}'][i][self.topology[t-1]] = factor * errors[f'layer{t}'][i] \
+                deltas[f'W{t}{t-1}'][i][self.topology[t-1]] = self.learning_rate * errors[f'layer{t}'][i] \
                                     + self.momentum * deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
-                self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] += deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
+                self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] = (1 - self.learning_rate * self.decay) * \
+                    self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] + deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
 
     def step(self, example):
         '''
