@@ -105,7 +105,7 @@ class APBT:
         to encode
         '''
         values = self.attributes[attr]
-
+        # encode the values
         if len(values) > 1:
             if values[0] == '0' and values[1] == '1':
                 return False
@@ -228,10 +228,10 @@ class APBT:
         Generate a new network
         '''
         h = {
-            'k_fold': random.randint(2, 10),
-            'learning_rate': random.uniform(1e-4, 0.1),
-            'momentum': random.uniform(0.0, 0.9),
-            'decay': random.uniform(0.0, .01),
+            # 'k_fold': random.randint(2, 10),
+            'learning_rate': random.uniform(1e-4, 1e-1),
+            'momentum': random.uniform(0.1, 0.9),
+            'decay': random.uniform(0.1, 0.9),
             'hidden_units': [
                 random.randint(2, 10) 
                 for _ in range(random.randint(1, 4))
@@ -271,9 +271,9 @@ class APBT:
         '''
         Evaluate the performance of the network
         '''
-        n = net.get_num_parameters()
+        size = net.num_params()
         accuracy = net.test(self.testing)
-        perf = accuracy / n ** 0.5
+        perf = accuracy ** 2 / size ** 0.5
         return perf
 
     # TODO: test 
@@ -290,8 +290,8 @@ class APBT:
         sorted_nets = [i for i in range(self.k)]
         sorted_nets.sort(key=lambda x: self.perfs[x], reverse=True)
 
-        top = .2 # top 20%
-        bottom = 1 - .2 # bottom 20%
+        top = .3 # top 20%
+        bottom = .7 # bottom 20%
 
         # check if net is in the bottom 20%
         if index in sorted_nets[int(self.k * bottom):]:
@@ -302,9 +302,10 @@ class APBT:
             # get the hyperparameters of the top net
             top_hyperparams = self.hyperparams[top_index]
             # replace the current net with the top net
-            
             return top_net, top_hyperparams
         else :
+            # net is not in the bottom 20%
+            # so it's doing okay for now
             return net, hyperparams
 
 
@@ -315,9 +316,9 @@ class APBT:
         perturbing the current hyperparameters
         '''
         # randomly perturb the hyperparameters by factor
-        hyperparams['learning_rate'] *= random.choice([.8, 1.2])
-        hyperparams['momentum'] *= random.choice([.8, 1.2])
-        hyperparams['decay'] *= random.choice([.8, 1.2])
+        hyperparams['learning_rate'] *= random.uniform(.8, 1.2)
+        hyperparams['momentum'] *= random.uniform(.8, 1.2)
+        hyperparams['decay'] *= random.uniform(.8, 1.2)
 
         # randomly perturb the topology
         rng_index = random.randint(1, len(net.topology) - 2)
@@ -358,7 +359,7 @@ class APBT:
         Check if the net is ready to exploit and explore
         after a certain number of last_ready since last ready
         '''
-        READINESS = 10 # 10 timesteps
+        READINESS = 5 # 10 timesteps
 
         if timestep - last_ready > READINESS:
             # might need to check if the performance is good enough
@@ -404,8 +405,8 @@ class APBT:
                         perf = self.evaluate(net)
 
                 # update the population
-                self.population[i] = deepcopy(net)
-                self.hyperparams[i] = deepcopy(hyperparams)
+                self.population[i] = net
+                self.hyperparams[i] = hyperparams
                 self.perfs[i] = perf
                 self.last_ready[i] = last + 1
             

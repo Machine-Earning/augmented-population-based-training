@@ -40,7 +40,7 @@ class ANN:
         
         # self.end_training = False
         # hyperparameters
-        self.k_fold = hyperparams['k_fold']
+        # self.k_fold = hyperparams['k_fold']
         self.hidden_units = hyperparams['hidden_units']
         self.learning_rate = hyperparams['learning_rate']
         self.momentum = hyperparams['momentum']
@@ -66,6 +66,7 @@ class ANN:
         }
 
         self.res = None
+        # self.num_params = self.num_params()
 
         # print the everything
         if self.debug:
@@ -116,7 +117,7 @@ class ANN:
         '''
         Set the hyperparameters of the Artificial Neural Network
         '''
-        self.k_fold = hyperparams['k_fold']
+        # self.k_fold = hyperparams['k_fold']
         self.learning_rate = hyperparams['learning_rate']
         self.momentum = hyperparams['momentum']
         self.decay = hyperparams['decay']
@@ -125,13 +126,13 @@ class ANN:
             hyperparams['hidden_units'] + \
             [self.output_units]
     
-    def get_num_parameters(self):
+    def num_params(self):
         '''
         Get the number of parameters
         '''
         num_parameters = 0
-        for _, value in self.weights.items():
-            num_parameters += len(value) * len(value[0])
+        for t in range(1, len(self.topology)):
+            num_parameters += self.topology[t] * self.topology[t-1]
         return num_parameters
 
     def save(self, filename=None):
@@ -244,7 +245,7 @@ class ANN:
                 for j in range(len(self.weights[f'W{l}{l-1}'][i])):
                     w_term += self.weights[f'W{l}{l-1}'][i][j] ** 2
 
-        loss += self.decay * (w_term / (self.get_num_parameters() * 2))
+        loss += self.decay * (w_term / (self.num_params() * 2))
 
         return loss
 
@@ -280,7 +281,9 @@ class ANN:
         return errors
 
     def step(self, errors):
-
+        '''
+        Update the weights with the errors
+        '''
         deltas = {
             f'W{i}{i-1}': [[ 0.0 for _ in range(self.topology[i-1] + 1)]
                     for _ in range(self.topology[i])] 
@@ -314,7 +317,7 @@ class ANN:
         # get the data
         data = train_data
         # get number of folds
-        k = self.k_fold
+        # k = self.k_fold
 
         # if k > 1:
         #     # randomly shuffle the data into folds 
@@ -446,7 +449,8 @@ class ANN:
             # get the output
             output = self.forward(instance[0])
             # check if the output is correct
-            accuracy += 1.0 - self.loss(instance[1], output)
+            accuracy += (1.0 - self.loss(instance[1], output))
+        # get the average accuracy
         accuracy /= len(test_data)
 
         return accuracy
