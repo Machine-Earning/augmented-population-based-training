@@ -414,7 +414,7 @@ class ANN:
         # shuffle the data
         random.shuffle(data)
         # train the network
-        for i in range(self.epochs):
+        for _ in range(self.epochs):
             loss = 0.0
             # if self.debug:
             #     print('Epoch: ', i, end='')

@@ -49,9 +49,26 @@ class APBT:
         self.training = self.read_data(training)
         self.testing = self.read_data(testing)
         self.n_examples = len(self.training)
+        # setting validation to 20% of the training data
+        self.validation = self.training[:int(self.n_examples * 0.2)]
+        self.training = self.training[int(self.n_examples * 0.2):]
 
+        # initial ranges for the constants
+        self.LR_RANGE = (1e-4, 1e-1) # learning rate
+        self.M_RANGE = (.0, .9) # momentum
+        self.D_RANGE = (.0, .1) # decay
+        self.HL_RANGE = (1, 4) # hidden layers
+        self.HUPL_RANGE = (2, 10) # hidden units per layer
+        self.PERTS = (0.8, 1.2) # perturbations
+        self.READINESS = 10 # number of epochs to wait before exploitation
+        self.TRUNC = .2 # truncation threshold
         # generate the population
         self.generate_population(k)
+
+        # best running best performer, its performance,
+        # and its hyperparameters 
+        self.best = None
+
 
         if self.debug:
             print('Population:', self.population)
@@ -59,6 +76,7 @@ class APBT:
             print('Perfs:', self.perfs)
             print('last_ready:', self.last_ready)
             print('Training:', self.training)
+            print('validation:', self.validation)
             print('Testing:', self.testing)
             print('Number of examples:', self.n_examples)
 
@@ -229,12 +247,12 @@ class APBT:
         '''
         h = {
             # 'k_fold': random.randint(2, 10),
-            'learning_rate': random.uniform(1e-4, 1e-1),
-            'momentum': random.uniform(0.1, 0.9),
-            'decay': random.uniform(0.1, 0.9),
+            'learning_rate': random.uniform(*self.LR_RANGE),
+            'momentum': random.uniform(*self.M_RANGE),
+            'decay': random.uniform(*self.D_RANGE),
             'hidden_units': [
-                random.randint(2, 10) 
-                for _ in range(random.randint(1, 4))
+                random.randint(*self.HUPL_RANGE) 
+                for _ in range(random.randint(*self.HL_RANGE))
             ] # list of number of nodes in each layer
         }
 
@@ -272,8 +290,9 @@ class APBT:
         Evaluate the performance of the network
         '''
         size = net.num_params()
-        accuracy = net.test(self.testing)
-        perf = accuracy ** 2 / size ** 0.5
+        accuracy = net.test(self.validation)
+        perf = (100 * accuracy) ** 2 / size
+        # print('perf: ', perf)
         return perf
 
     # TODO: test 
@@ -290,8 +309,8 @@ class APBT:
         sorted_nets = [i for i in range(self.k)]
         sorted_nets.sort(key=lambda x: self.perfs[x], reverse=True)
 
-        top = .3 # top 20%
-        bottom = .7 # bottom 20%
+        top = self.TRUNC # top 20%
+        bottom = 1- self.TRUNC # bottom 20%
 
         # check if net is in the bottom 20%
         if index in sorted_nets[int(self.k * bottom):]:
@@ -316,14 +335,15 @@ class APBT:
         perturbing the current hyperparameters
         '''
         # randomly perturb the hyperparameters by factor
-        hyperparams['learning_rate'] *= random.uniform(.8, 1.2)
-        hyperparams['momentum'] *= random.uniform(.8, 1.2)
-        hyperparams['decay'] *= random.uniform(.8, 1.2)
+        hyperparams['learning_rate'] *= random.choice([*self.PERTS])
+        hyperparams['momentum'] *= random.choice([*self.PERTS])
+        hyperparams['decay'] *= random.choice([*self.PERTS])
 
         # randomly perturb the topology
         rng_index = random.randint(1, len(net.topology) - 2)
         # randomly add or remove a unit
         rng_choice = random.choice([-1, 1])
+        # udpated the hyperparameter
         hyperparams['hidden_units'][rng_index] += rng_choice
 
         # adjust the weights based on changed topology
@@ -354,14 +374,13 @@ class APBT:
         return net, hyperparams
 
     # TODO: test
-    def is_ready(self, last_ready, timestep, perf):
+    def is_ready(self, last_ready, timestep):
         '''
         Check if the net is ready to exploit and explore
         after a certain number of last_ready since last ready
         '''
-        READINESS = 5 # 10 timesteps
         # checking the readiness
-        if timestep - last_ready > READINESS:
+        if timestep - last_ready > self.READINESS:
             # might need to check if the performance is good enough
             return True
         # by default not ready
@@ -397,7 +416,7 @@ class APBT:
                 perf = self.evaluate(net)
 
                 # check if the net is ready to exploit and explore
-                if self.is_ready(last, e, perf):
+                if self.is_ready(last, e):
                     new_net, new_hyperparams = self.exploit(net, hyperparams, perf)
                     # check if the new network is different
                     if self.is_diff(new_net, net):
@@ -410,9 +429,29 @@ class APBT:
                 self.perfs[i] = perf
                 self.last_ready[i] = last + 1
             
+            # get best net so far 
+            self.best = self.get_best()
+            
         # return net with the best performance
         best_perf = max(self.perfs)
         best_net = self.population[self.perfs.index(best_perf)]
+        hyperparams = self.hyperparams[self.perfs.index(best_perf)]
+        # check if the best net is better than best known net
+        if best_perf > self.best[1]:
+            self.best = (best_net, best_perf, hyperparams)
 
-        return best_net
+
+        return self.best
         
+    def get_best(self):
+        '''
+        Get the best net
+        '''
+        # max gen  performance
+        best_perf = max(self.perfs)
+        if not self.best or self.best[1] < best_perf: # if no best net yet or new best net found
+            best_net = self.population[self.perfs.index(best_perf)]
+            best_hyperparams = self.hyperparams[self.perfs.index(best_perf)]
+            return best_net, best_perf, best_hyperparams
+        else: # best net is the same
+            return self.best
