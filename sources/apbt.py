@@ -62,9 +62,9 @@ class APBT:
         self.HL_RANGE = (1, 4) # hidden layers
         self.HUPL_RANGE = (2, 10) # hidden units per layer
         self.PERTS = (0.8, 1.2) # perturbations
-        self.READINESS = 10 # number of epochs to wait before exploitation
+        self.READINESS = 60 # number of epochs to wait before exploitation
         self.TRUNC = .2 # truncation threshold
-        self.X, self.Y = 1.08, 1.05 # scaling factor
+        self.X, self.Y = 1.09, 1.02 # scaling factor
     
         # generate the population
         self.generate_population(k)
@@ -278,13 +278,15 @@ class APBT:
             self.hyperparams[n] = h
 
 
-    def step(self, net, hyperparams):
+    def step(self, net):
         '''
         Apply one optimization step to the network,
         given the hyperparameters
         '''
-        net.set_hyperparameters(hyperparams)
+        # set through training data with 
+        # the hyperparameters setd
         net.training_step(self.training)
+        # return the network address
         return net
 
     def evaluate(self, net):
@@ -306,24 +308,24 @@ class APBT:
         return self.X ** (acc * 100) / self.Y ** size
 
     # TODO: test 
-    def exploit(self, net, hyperparams, perf):
+    def exploit(self, net, hyperparams):
         '''
         Exploit the rest of the population 
         to find a better solution
         truncation selection
         '''
         # get index of net
-        index = self.perfs.index(perf)
-        # sort the population by perfs
-        # sorted_nets = [i for i in range(self.k)]
-        # sorted_nets.sort(key=lambda x: self.perfs[x], reverse=True)
-        top = self.TRUNC # top 20%
+        index = net.net_id
+        # get the bottoms
         bottom = 1 - self.TRUNC # bottom 20%
-
+        bottoms = self.leaderboard[int(self.k * bottom):]
         # check if net is in the bottom 20%
-        if index in self.leaderboard[int(self.k * bottom):]:
+        if index in bottoms:
+            # get the tops
+            top = self.TRUNC # top 20%
+            tops = self.leaderboard[:int(self.k * top)]
             # get the index of one of the top 20%
-            top_index = random.choice(self.leaderboard[:int(self.k * top)])
+            top_index = random.choice(tops)
             # get the index of the top net
             top_net = deepcopy(self.population[top_index])
             # get the hyperparameters of the top net
@@ -363,7 +365,18 @@ class APBT:
         # randomly add or remove a unit
         rng_choice = random.choice([-1, 1])
         # udpated the hyperparameter
-        hyperparams['hidden_units'][rng_index] += rng_choice
+        hyperparams['hidden_units'][rng_index - 1] += rng_choice
+        # check if the hyperparameter is valid
+        if hyperparams['hidden_units'][rng_index - 1] < 1:
+            # if not, revert back to the previous hyperparameter
+            hyperparams['hidden_units'][rng_index - 1] = 1
+            return net, hyperparams
+            # remove the unit
+            # del hyperparams['hidden_units'][rng_index - 1]
+            # delete the weight in that layer
+            # reconnet the network and add new weights
+            # relabel everything
+
 
         # adjust the weights based on changed topology
         if rng_choice == -1:
@@ -371,10 +384,10 @@ class APBT:
             # choose a random unit to remove
             rng_unit = random.randint(0, net.topology[rng_index] - 1)
             # row weight
-            net.weights[f'W{rng_index}{rng_index-1}'].remove(rng_unit)
+            del net.weights[f'W{rng_index}{rng_index-1}'][rng_unit]
             # column weight
             for r in range(net.topology[rng_index+1]):
-                net.weights[f'W{rng_index+1}{rng_index}'][r].remove(rng_unit)
+                del net.weights[f'W{rng_index+1}{rng_index}'][r][rng_unit]
             # remove the unit
             net.topology[rng_index] -= 1
 
@@ -391,18 +404,20 @@ class APBT:
         return net, hyperparams
 
     # TODO: test
-    def is_ready(self, last_ready, timestep, perf):
+    def is_ready(self, last_ready, timestep, net_id):
         '''
         Check if the net is ready to exploit and explore
         after a certain number of last_ready since last ready
         '''
         # get top 3 of leaderboard
-        top_3 = self.leaderboard[:3]
-        # check if perf is in top 3
-        if perf in top_3: return False # top 3 never exploit
+        top = self.leaderboard[0]
+        # check if perf is top
+        if net_id == top:
+            return False # top never exploit
 
         # checking the readiness
         if timestep - last_ready > self.READINESS:
+            self.last_ready[net_id] = timestep
             # might need to check if the performance is good enough
             return True
         # by default not ready
@@ -416,8 +431,14 @@ class APBT:
         by checking if the weights are different
         if a net is doing okay, it's not different
         '''
-        # check if the weights are different
-        return net1.weights != net2.weights
+        # check if the weights dicts are different
+        if net1.weights != net2.weights:
+            return True
+        # check if the topology is different
+        # if net1.topology != net2.topology:
+        #     return True
+        # by default, they are not different
+        return False
 
 
     # TODO: test
@@ -435,27 +456,36 @@ class APBT:
                 perf = self.perfs[i]
                 last = self.last_ready[i]
                 # optimize the net
-                net = self.step(net, hyperparams)
+                net = self.step(net)
                 # evaluate the net
                 perf, accuracy = self.evaluate(net)
+                # update
+                self.perfs[i] = perf
+                self.accuracies[i] = accuracy
+                # update the leaderboard
+                self.update_leaderboard()
 
                 # check if the net is ready to exploit and explore
-                if self.is_ready(last, e, perf):
-                    new_net, new_hyperparams = self.exploit(net, hyperparams, perf)
+                if self.is_ready(last, e, i):
+                    new_net, new_hyperparams = self.exploit(net, hyperparams)
                     # check if the new network is different
-                    if self.is_diff(new_net, net): # have you copied the best
+                    if self.is_diff(new_net, net): 
+                        # have you copied the best
                         net, hyperparams = self.explore(new_net, new_hyperparams)
+                        # set the hyperparameters
+                        net.set_hyperparameters(hyperparams)
+                        # evaluate the net with perturbations
                         perf, accuracy = self.evaluate(net)
+                        # update
+                        self.perfs[i] = perf
+                        self.accuracies[i] = accuracy
+                        # update the leaderboard
+                        self.update_leaderboard()
 
                 # update the population
                 self.population[i] = net
                 self.hyperparams[i] = hyperparams
-                self.perfs[i] = perf
-                self.last_ready[i] = last + 1
-                self.accuracies[i] = accuracy
             
-            # update the leaderboard
-            self.update_leaderboard() 
             # get the most accurate net so far 
             self.best = self.get_best()
 
@@ -464,15 +494,8 @@ class APBT:
             print(f'Current best net accuracy: {self.best[2]:.2f}', end='\n')
             print(f'Current best net hyperparameters: {self.best[3]}', end='\n')
             
-        # return net with the best performance
-        # best_perf = max(self.perfs)
-        # best_net = self.population[self.perfs.index(best_perf)]
-        # hyperparams = self.hyperparams[self.perfs.index(best_perf)]
-        # check if the best net is better than best known net
-        # if best_perf > self.best[1]:
-        #     self.best = (best_net, best_perf, hyperparams)
-        # find overall best
-        self.best = self.get_best()
+        # get most accurate overall
+        self.best = self.get_best() # might not be necessary
         # return the best net
         return self.best[0]
         

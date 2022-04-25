@@ -19,7 +19,7 @@ def main():
     attributes_path = 'data/tennis/tennis-attr.txt'
     weights_path = 'models/weights.txt'
     debugging = True
-    k = 80 # population size, 80 good number
+    k = 100 # population size, 80 good number
     epochs = 400 # number of epochs
 
 

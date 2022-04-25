@@ -237,7 +237,8 @@ class ANN:
                 for j in range(len(self.weights[f'W{l}{l-1}'][i])):
                     w_term += self.weights[f'W{l}{l-1}'][i][j] ** 2
 
-        loss += self.decay * (w_term / (self.num_params() * 2))
+        n = self.num_params()
+        loss += self.decay * (w_term / (n * 2))
 
         return loss
 
