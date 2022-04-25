@@ -260,12 +260,6 @@ class ANN:
         #     print('Output: ', output)
 
         # prior delta update
-        deltas = {
-            f'W{i}{i-1}': [[ 0.0 for _ in range(self.topology[i-1] + 1)]
-                    for _ in range(self.topology[i])] 
-                for i in range(1, len(self.topology))
-        }
-
         errors = {
             f'layer{l}': [0.0 for _ in range(self.topology[l])]
                 for l in range(1, len(self.topology))
@@ -283,6 +277,16 @@ class ANN:
 
                 errors[f'layer{l}'][i] *= self.d_sigmoid(self.res[f'layer{l}'][i])
 
+        return errors
+
+    def step(self, errors):
+
+        deltas = {
+            f'W{i}{i-1}': [[ 0.0 for _ in range(self.topology[i-1] + 1)]
+                    for _ in range(self.topology[i])] 
+                for i in range(1, len(self.topology))
+        }
+
         # update the weights
         for t in range(1, len(self.topology)):
             for i in range(self.topology[t]):
@@ -298,17 +302,6 @@ class ANN:
                                     + self.momentum * deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
                 self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] = (1 - self.learning_rate * self.decay) * \
                     self.weights[f'W{t}{t-1}'][i][self.topology[t-1]] + deltas[f'W{t}{t-1}'][i][self.topology[t-1]]
-
-    def step(self, example):
-        '''
-        Perform a single step of SGD
-        '''
-        inputt, target = example[0], example[1]
-        output = self.forward(inputt)
-        loss = self.loss(target, output)
-        self.backward(target, output)
-        # return loss
-        return loss
 
     # TODO: not sure about this
     def training_step(self, train_data):
@@ -423,8 +416,17 @@ class ANN:
             # if self.debug:
             #     print('Epoch: ', i, end='')
 
-            for instance in data:
-                loss += self.step(instance)
+            for example in data:
+                # loss += self.step(instance)
+                inputt, target = example[0], example[1]
+                # get the output
+                output = self.forward(inputt)
+                # compute the loss
+                loss += self.loss(target, output)
+                # backpropagate the errors
+                errors = self.backward(target, output)
+                # update the weights
+                self.step(errors)
                 
             if self.debug:
                 # print('Weights: ', self.weights)

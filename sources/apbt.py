@@ -307,8 +307,6 @@ class APBT:
         else :
             return net, hyperparams
 
-      
-
 
     # TODO: test
     def explore(self, net, hyperparams):

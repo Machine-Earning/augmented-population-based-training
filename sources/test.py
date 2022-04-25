@@ -20,7 +20,7 @@ def main():
     weights_path = 'models/weights.txt'
     debugging = True
     k = 80
-    epochs = 1000
+    epochs = 200
 
 
     apbt = APBT(
