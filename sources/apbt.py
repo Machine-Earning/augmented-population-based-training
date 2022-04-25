@@ -478,14 +478,6 @@ class APBT:
         '''
         Get the best net
         '''
-        # max gen  performance
-        # best_perf = max(self.perfs)
-        # if not self.best or self.best[1] < best_perf: # if no best net yet or new best net found
-        #     best_net = self.population[self.perfs.index(best_perf)]
-        #     best_hyperparams = self.hyperparams[self.perfs.index(best_perf)]
-        #     return best_net, best_perf, best_hyperparams
-        # else: # best net is the same
-        #     return self.best
 
         # max last gen accuracy
         best_acc = max(self.accuracies)
@@ -495,3 +487,6 @@ class APBT:
             best_hyperparams = self.hyperparams[index]
             best_perf = self.perfs[index]
             return best_net, best_perf, best_acc, best_hyperparams
+        else: # best net is the same
+            return self.best
+        
