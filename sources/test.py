@@ -33,7 +33,7 @@ def main():
     )
 
     print('\nRunning the population based training\n')
-    best_net = apbt.train()
+    best_net, most_acc = apbt.train()
     print('\nPopulation Based Training complete\n')
     # create the artificial neural network
     # printing the neural network

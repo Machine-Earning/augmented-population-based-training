@@ -79,7 +79,8 @@ class APBT:
         # best running best performer, its performance,
         # accuracy, and its hyperparameters 
         self.best = None
-        
+        self.most_acc = None
+
         if self.debug:
             print('Population:', self.population)
             print('Hyperparams:', self.hyperparams)
@@ -492,29 +493,50 @@ class APBT:
             
             # get the most accurate net so far 
             self.best = self.get_best()
+            self.most_acc = self.get_most_accurate()
 
             # print the best net so far
             print(f'Current best net perf: {self.best[1]:.2f}', end='\n')
             print(f'Current best net accuracy: {self.best[2]:.2f}', end='\n')
             print(f'Current best net hyperparameters: {self.best[3]}', end='\n')
+
+            # print the most accurate net so far
+            print(f'Current most accurate net perf: {self.most_acc[1]:.2f}', end='\n')
+            print(f'Current most accurate net accuracy: {self.most_acc[2]:.2f}', end='\n')
+            print(f'Current most accurate net hyperparameters: {self.most_acc[3]}', end='\n')
             
         # get most accurate overall
         self.best = self.get_best() # might not be necessary
+        self.most_acc = self.get_most_accurate()
         # return the best net
-        return self.best[0]
+        return self.best[0], self.most_acc[0]
         
     def get_best(self):
         '''
         Get the best net
         '''
+        # max last gen perf
+        best_perf = max(self.perfs)
+        if not self.best or self.best[1] < best_perf: # if no best net yet or new best net found
+            index = self.perfs.index(best_perf)
+            best_net = self.population[index]
+            best_hyperparams = self.hyperparams[index]
+            best_acc = self.accuracies[index]
+            return best_net, best_perf, best_acc, best_hyperparams
+        else: # best net is the same
+            return self.best
+
+    def get_most_accurate(self):
+        '''
+        Get the most accurate net
+        '''
         # max last gen accuracy
         best_acc = max(self.accuracies)
-        if not self.best or self.best[2] < best_acc: # if no best net yet or new best net found
+        if not self.most_acc or self.most_acc[2] < best_acc: # if no best net yet or new best net found
             index = self.accuracies.index(best_acc)
             best_net = self.population[index]
             best_hyperparams = self.hyperparams[index]
             best_perf = self.perfs[index]
             return best_net, best_perf, best_acc, best_hyperparams
         else: # best net is the same
-            return self.best
-        
+            return self.most_acc

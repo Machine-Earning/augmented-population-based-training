@@ -384,9 +384,6 @@ class ANN:
             # get the number of instances
             num_instances = len(data)
 
-        # if self.debug:
-        #     print('data: ', data)
-
         # get number of data per fold
         fold_size = num_instances // k
 
