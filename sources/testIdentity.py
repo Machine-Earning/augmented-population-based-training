@@ -19,7 +19,7 @@ def main():
     attributes_path = 'data/identity/identity-attr.txt'
     debugging = True
     k = 40 # population size, 80 good number
-    epochs = 20000 # number of epochs
+    epochs = 12000 # number of epochs
 
 
     apbt = APBT(
