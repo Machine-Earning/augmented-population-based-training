@@ -14,9 +14,9 @@ from apbt import APBT
 def main():
     '''main of the program'''
 
-    training_path = 'data/identity/identity-train.txt'
-    testing_path = None
-    attributes_path = 'data/identity/identity-attr.txt'
+    training_path = 'data/iris/iris-train.txt'
+    testing_path = 'data/iris/iris-train.txt'
+    attributes_path = 'data/iris/iris-attr.txt'
     weights_path = 'models/weights.txt'
     debugging = True
     k = 80 # population size, 80 good number

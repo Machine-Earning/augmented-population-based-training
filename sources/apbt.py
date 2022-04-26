@@ -48,18 +48,23 @@ class APBT:
         # reading input,output lenght
         self.input_units, self.output_units = self.get_input_output_len()
         # reading data
-        self.training = self.read_data(training)
-        self.testing = self.read_data(testing)
-        self.n_examples = len(self.training)
-        # setting validation to 20% of the training data
-        # if dataset is identity
-        # self.validation = self.training
-        # self.training = self.training
+        if testing is None:
+            self.training = self.read_data(training)
+            self.testing = self.training
+            self.validation = self.training
+        else:
+            self.training = self.read_data(training)
+            self.testing = self.read_data(testing)
+            self.n_examples = len(self.training)
+            # suffle training data
+            random.shuffle(self.training)
+            # setting validation to 20% of the training data
+            self.validation = self.training[:int(self.n_examples * 0.2)]
+            self.training = self.training[int(self.n_examples * 0.2):]
+        
+       
 
-        # suffle training data
-        random.shuffle(self.training)
-        self.validation = self.training[:int(self.n_examples * 0.2)]
-        self.training = self.training[int(self.n_examples * 0.2):]
+        
        
         # initial ranges for the constants
         self.LR_RANGE = (1e-4, 1e-1) # learning rate
