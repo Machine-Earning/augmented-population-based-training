@@ -19,8 +19,8 @@ def main():
     attributes_path = 'data/identity/identity-attr.txt'
     weights_path = 'models/weights.txt'
     debugging = True
-    k = 80 # population size, 80 good number
-    epochs = 10000 # number of epochs
+    k = 40 # population size, 80 good number
+    epochs = 20000 # number of epochs
 
 
     apbt = APBT(
@@ -31,8 +31,6 @@ def main():
         attributes_path,
         debugging
     )
-
-    apbt.t
 
     print('\nRunning the population based training\n')
     best_net = apbt.train()

@@ -10,7 +10,6 @@
 # imports
 from apbt import APBT
 
-
 def main():
     '''main of the program'''
 
@@ -20,7 +19,7 @@ def main():
     weights_path = 'models/weights.txt'
     debugging = True
     k = 80 # population size, 80 good number
-    epochs = 10000 # number of epochs
+    epochs = 6000 # number of epochs
 
 
     apbt = APBT(

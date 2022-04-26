@@ -62,10 +62,6 @@ class APBT:
             self.validation = self.training[:int(self.n_examples * 0.2)]
             self.training = self.training[int(self.n_examples * 0.2):]
         
-       
-
-        
-       
         # initial ranges for the constants
         self.LR_RANGE = (1e-4, 1e-1) # learning rate
         self.M_RANGE = (.0, .9) # momentum
@@ -83,8 +79,7 @@ class APBT:
         # best running best performer, its performance,
         # accuracy, and its hyperparameters 
         self.best = None
-
-
+        
         if self.debug:
             print('Population:', self.population)
             print('Hyperparams:', self.hyperparams)
