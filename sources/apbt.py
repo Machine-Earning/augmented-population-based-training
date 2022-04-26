@@ -82,6 +82,7 @@ class APBT:
         # accuracy, and its hyperparameters 
         self.best = None
         self.most_acc = None
+        self.log_path = ''
 
         if self.debug:
             print('Population:', self.population)
@@ -500,7 +501,7 @@ class APBT:
             d_hist.append(self.best[3]['decay'])
 
             # log the histories
-            utils.log_csv("outputs/iris_res.csv", [
+            utils.log_csv(self.log_path, [
                 top_acc_hist, eff_acc_hist, perf_hist, size_hist,
                 lr_hist, m_hist, d_hist
             ], ['top', 'eff', 'perf', 'size', 'lr', 'm', 'd'])

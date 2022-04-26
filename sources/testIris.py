@@ -16,7 +16,6 @@ def main():
     training_path = 'data/iris/iris-train.txt'
     testing_path = 'data/iris/iris-train.txt'
     attributes_path = 'data/iris/iris-attr.txt'
-    weights_path = 'models/weights.txt'
     debugging = True
     k = 80 # population size, 80 good number
     epochs = 2500 # number of epochs
@@ -30,6 +29,9 @@ def main():
         attributes_path,
         debugging
     )
+
+    # set log path
+    apbt.log_path('logs/iris.csv')
 
     # run trials
     for trial in range(3):
