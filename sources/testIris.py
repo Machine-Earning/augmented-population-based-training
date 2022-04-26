@@ -31,7 +31,7 @@ def main():
     )
 
     # set log path
-    apbt.log_path('logs/iris.csv')
+    apbt.log_path='logs/iris.csv'
 
     # run trials
     for trial in range(3):

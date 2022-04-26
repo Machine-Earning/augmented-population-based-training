@@ -500,13 +500,6 @@ class APBT:
             m_hist.append(self.best[3]['momentum'])
             d_hist.append(self.best[3]['decay'])
 
-            # log the histories
-            utils.log_csv(self.log_path, [
-                top_acc_hist, eff_acc_hist, perf_hist, size_hist,
-                lr_hist, m_hist, d_hist
-            ], ['top', 'eff', 'perf', 'size', 'lr', 'm', 'd'])
-
-
             # print the best net so far
             print(f'Current best net perf: {self.best[1]:.2f}', end='\n')
             print(f'Current best net accuracy: {self.best[2]:.2f}', end='\n')
@@ -514,6 +507,11 @@ class APBT:
             print(f'Current most accurate net perf: {self.most_acc[1]:.2f}', end='\n')
             print(f'Current most accurate net accuracy: {self.most_acc[2]:.2f}', end='\n')
             
+        # log the histories
+        utils.log_csv(self.log_path, [
+            top_acc_hist, eff_acc_hist, perf_hist, size_hist,
+            lr_hist, m_hist, d_hist
+        ], ['top', 'eff', 'perf', 'size', 'lr', 'm', 'd'])
         # get most accurate overall
         self.best = self.get_best() # might not be necessary
         self.most_acc = self.get_most_accurate()

@@ -32,7 +32,7 @@ def main():
     )
 
     # set log path
-    apbt.log_path('logs/tennis.csv')
+    apbt.log_path='logs/tennis.csv'
 
 
     # run trials

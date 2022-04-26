@@ -32,7 +32,7 @@ def main():
     )
 
     # set log path
-    apbt.log_path('logs/identity.csv')
+    apbt.log_path='logs/identity.csv'
 
 
     # run trials

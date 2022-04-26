@@ -63,11 +63,11 @@ class ANN:
         # self.num_params = self.num_params()
 
         # print the everything
-        if self.debug:
-            print('learning rate: ', self.learning_rate)
-            print('momentum: ', self.momentum)
-            print('Weights: ', self.weights)
-            print('Topology: ', self.topology)
+        # if self.debug:
+        #     print('learning rate: ', self.learning_rate)
+        #     print('momentum: ', self.momentum)
+        #     print('Weights: ', self.weights)
+        #     print('Topology: ', self.topology)
 
     def rand_init(self):
         '''
