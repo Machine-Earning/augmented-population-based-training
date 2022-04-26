@@ -52,9 +52,15 @@ class APBT:
         self.testing = self.read_data(testing)
         self.n_examples = len(self.training)
         # setting validation to 20% of the training data
+        # if dataset is identity
+        # self.validation = self.training
+        # self.training = self.training
+
+        # suffle training data
+        random.shuffle(self.training)
         self.validation = self.training[:int(self.n_examples * 0.2)]
         self.training = self.training[int(self.n_examples * 0.2):]
-
+       
         # initial ranges for the constants
         self.LR_RANGE = (1e-4, 1e-1) # learning rate
         self.M_RANGE = (.0, .9) # momentum
@@ -62,7 +68,7 @@ class APBT:
         self.HL_RANGE = (1, 4) # hidden layers
         self.HUPL_RANGE = (2, 10) # hidden units per layer
         self.PERTS = (0.8, 1.2) # perturbations
-        self.READINESS = 180 # number of epochs to wait before exploitation
+        self.READINESS = 220 # number of epochs to wait before exploitation
         self.TRUNC = .2 # truncation threshold
         self.X, self.Y = 1.09, 1.02 # scaling factor
     
