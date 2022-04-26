@@ -62,7 +62,7 @@ class APBT:
         self.HL_RANGE = (1, 4) # hidden layers
         self.HUPL_RANGE = (2, 10) # hidden units per layer
         self.PERTS = (0.8, 1.2) # perturbations
-        self.READINESS = 100 # number of epochs to wait before exploitation
+        self.READINESS = 60 # number of epochs to wait before exploitation
         self.TRUNC = .2 # truncation threshold
         self.X, self.Y = 1.09, 1.02 # scaling factor
     
@@ -363,21 +363,16 @@ class APBT:
         # randomly perturb the topology
         rng_index = random.randint(1, len(net.topology) - 2)
         # randomly add or remove a unit
-        rng_choice = random.choice([-1, 1])
+        rng_choice = random.choice([-1, 0, 1])
         # udpated the hyperparameter
         hyperparams['hidden_units'][rng_index - 1] += rng_choice
         # check if the hyperparameter is valid
         if hyperparams['hidden_units'][rng_index - 1] < 1:
             # if not, revert back to the previous hyperparameter
             hyperparams['hidden_units'][rng_index - 1] = 1
-            return net, hyperparams
-            # remove the unit
-            # del hyperparams['hidden_units'][rng_index - 1]
-            # delete the weight in that layer
-            # reconnet the network and add new weights
-            # relabel everything
-
-
+            # and return the previous hyperparameter
+            return net, hyperparams 
+            
         # adjust the weights based on changed topology
         if rng_choice == -1:
             # remove weight associated with removed unit
@@ -391,7 +386,7 @@ class APBT:
             # remove the unit
             net.topology[rng_index] -= 1
 
-        else: # rng_choice = 1
+        elif rng_choice == 1: # rng_choice = 1
             # row weight
             net.weights[f'W{rng_index}{rng_index-1}'].append([
                 net.rand_init() for _ in range(1+net.topology[rng_index-1])])
@@ -399,7 +394,10 @@ class APBT:
             for r in range(net.topology[rng_index+1]):
                 net.weights[f'W{rng_index+1}{rng_index}'][r].append(net.rand_init())
             # add the unit
-            net.topology[rng_index] += 1            
+            net.topology[rng_index] += 1   
+        else: # rng_choice = 0
+            # do nothing
+            pass         
 
         return net, hyperparams
 
@@ -503,7 +501,6 @@ class APBT:
         '''
         Get the best net
         '''
-
         # max last gen accuracy
         best_acc = max(self.accuracies)
         if not self.best or self.best[2] < best_acc: # if no best net yet or new best net found
