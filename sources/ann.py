@@ -320,9 +320,9 @@ class ANN:
             # update the weights
             self.step(errors)
             
-        if self.debug:
-            # print('Weights: ', self.weights)
-            print(f'Net #{self.net_id}\'s loss: {loss/len(data): .3f}', end='')
+        # if self.debug:
+        #     # print('Weights: ', self.weights)
+        #     print(f'Net #{self.net_id}\'s loss: {loss/len(data): .3f}', end='')
 
         return loss/len(data)
 

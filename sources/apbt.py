@@ -9,9 +9,11 @@
 #############################################################
 
 # imports
+from ctypes import util
 from ann import ANN
 import random
 from copy import deepcopy
+import utils
 
 # Augmentated Population Based Training
 class APBT:
@@ -274,7 +276,6 @@ class APBT:
 
         return net, h
        
-
     def generate_population(self, population_size):
         '''
         Generate the population of neural networks
@@ -283,7 +284,6 @@ class APBT:
             net, h = self.generate_net(n)
             self.population[n] = net
             self.hyperparams[n] = h
-
 
     def step(self, net):
         '''
@@ -303,9 +303,8 @@ class APBT:
         size = net.num_params()
         accuracy = net.test(self.validation)
         perf = self.f(acc=accuracy, size=size)
-        print(f' | perf: {perf:.3f} | size: {size} | accuracy: {accuracy:.3f}', end='\n')
+        # print(f' | perf: {perf:.3f} | size: {size} | accuracy: {accuracy:.3f}', end='\n')
         return perf, accuracy
-
     # try to figure out what f should be
     def f(self, acc, size):
         '''
@@ -314,7 +313,6 @@ class APBT:
         # reward for accuracy, penalty for size
         return self.X ** (acc * 100) / self.Y ** size
 
-    # TODO: test 
     def exploit(self, net, hyperparams):
         '''
         Exploit the rest of the population 
@@ -354,9 +352,6 @@ class APBT:
         # update leaderboard
         self.leaderboard = sorted_nets
 
-
-
-    # TODO: test
     def explore(self, net, hyperparams):
         '''
         Produce new hyperparameters to explore by 
@@ -408,7 +403,6 @@ class APBT:
 
         return net, hyperparams
 
-    # TODO: test
     def is_ready(self, last_ready, timestep, net_id):
         '''
         Check if the net is ready to exploit and explore
@@ -419,7 +413,6 @@ class APBT:
         # check if perf is top
         if net_id == top:
             return False # top never exploit
-
         # checking the readiness
         if timestep - last_ready > self.READINESS:
             self.last_ready[net_id] = timestep
@@ -428,8 +421,6 @@ class APBT:
         # by default not ready
         return False
             
-
-    # TODO: check and test
     def is_diff(sel, net1, net2):
         '''
         Check if the networks are different,
@@ -439,18 +430,22 @@ class APBT:
         # check if the weights dicts are different
         if net1.weights != net2.weights:
             return True
-        # check if the topology is different
-        # if net1.topology != net2.topology:
-        #     return True
         # by default, they are not different
         return False
 
-
-    # TODO: test
     def train(self):
         '''
         Train the network population
         '''
+        top_acc_hist = []
+        eff_acc_hist = []
+        perf_hist = []
+        size_hist = []
+
+        lr_hist = []
+        m_hist = []
+        d_hist = []
+
         for e in range(self.epochs):
             # print the epoch number
             print('Epoch: ', e, end='\n')
@@ -495,15 +490,28 @@ class APBT:
             self.best = self.get_best()
             self.most_acc = self.get_most_accurate()
 
+            # update the histories
+            top_acc_hist.append(self.most_acc[2])
+            eff_acc_hist.append(self.best[2])
+            perf_hist.append(self.best[1])
+            size_hist.append(self.best[0].num_params())
+            lr_hist.append(self.best[3]['learning_rate'])
+            m_hist.append(self.best[3]['momentum'])
+            d_hist.append(self.best[3]['decay'])
+
+            # log the histories
+            utils.log_csv("outputs/iris_res.csv", [
+                top_acc_hist, eff_acc_hist, perf_hist, size_hist,
+                lr_hist, m_hist, d_hist
+            ], ['top', 'eff', 'perf', 'size', 'lr', 'm', 'd'])
+
+
             # print the best net so far
             print(f'Current best net perf: {self.best[1]:.2f}', end='\n')
             print(f'Current best net accuracy: {self.best[2]:.2f}', end='\n')
-            print(f'Current best net hyperparameters: {self.best[3]}', end='\n')
-
             # print the most accurate net so far
             print(f'Current most accurate net perf: {self.most_acc[1]:.2f}', end='\n')
             print(f'Current most accurate net accuracy: {self.most_acc[2]:.2f}', end='\n')
-            print(f'Current most accurate net hyperparameters: {self.most_acc[3]}', end='\n')
             
         # get most accurate overall
         self.best = self.get_best() # might not be necessary

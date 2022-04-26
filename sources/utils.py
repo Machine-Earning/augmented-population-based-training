@@ -7,7 +7,9 @@
 #   Description: 
 #############################################################
 
+from email import header
 import random
+
 
 def corrupt_data(data, classes, percent):
     '''corrupt the class labels of training examples from 0% to 20% (2% in-
@@ -36,5 +38,22 @@ def corrupt_data(data, classes, percent):
         data[e][-1] = random_class
         
     return data
+
+def log_csv(path, histories, headers):
+    '''log the data to the csv file'''
+    headers = ['e'] + headers
+    # open the file
+    with open(path, 'w') as f:
+        # write the headers
+        f.write(','.join(headers) + '\n')
+        # write the data
+        for h in range(len(histories[0])):
+            line = f'{h},'
+            for hh in range(len(histories)):
+                line += str(histories[hh][h]) + ','
+            f.write(line[:-1] + '\n')
+    
+    # epoch is number of every line
+    
 
 

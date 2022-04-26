@@ -20,7 +20,7 @@ def main():
     weights_path = 'models/weights.txt'
     debugging = True
     k = 80 # population size, 80 good number
-    epochs = 10000 # number of epochs
+    epochs = 2000 # number of epochs
 
 
     apbt = APBT(
