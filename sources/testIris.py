@@ -31,41 +31,44 @@ def main():
         debugging
     )
 
-    print('\nRunning the population based training\n')
-    best_net, most_acc = apbt.train()
-    print('\nPopulation Based Training complete\n')
-    # create the artificial neural network
-    # printing the neural network
-    print('\nPrinting learned weights\n')
-    best_net.print_network()
-    # save the weights
-    if weights_path:
-        best_net.save(weights_path)
-        print('weights saved to', weights_path)
+    # run trials
+    for trial in range(3):
 
-    # test the artificial neural network
-    print('\nTesting the NN...\n')
-    accuracy = 100 * best_net.test(apbt.testing)
-    n_params = best_net.num_params()
-    print('\nTesting complete\n')
-    print(f'\nAccuracy: {accuracy:.2f}%\n')
-    print(f'Number of parameters: {n_params}\n')
+        print('\nRunning the population based training\n')
+        best_net, most_acc = apbt.train()
+        print('\nPopulation Based Training complete\n')
+        # create the artificial neural network
+        # printing the neural network
+        print('\nPrinting learned weights\n')
+        best_net.print_network()
+        # save the weights
+        if weights_path:
+            best_net.save(weights_path)
+            print('weights saved to', weights_path)
 
-    # printing the neural network
-    print('\nPrinting learned weights\n')
-    most_acc.print_network()
-    # save the weights
-    if weights_path:
-        most_acc.save(weights_path)
-        print('weights saved to', weights_path)
+        # test the artificial neural network
+        print('\nTesting the NN...\n')
+        accuracy = 100 * best_net.test(apbt.testing)
+        n_params = best_net.num_params()
+        print('\nTesting complete\n')
+        print(f'\nAccuracy: {accuracy:.2f}%\n')
+        print(f'Number of parameters: {n_params}\n')
 
-    # test the artificial neural network
-    print('\nTesting the NN...\n')
-    accuracy = 100 * most_acc.test(apbt.testing)
-    n_params = most_acc.num_params()
-    print('\nTesting complete\n')
-    print(f'\nAccuracy: {accuracy:.2f}%\n')
-    print(f'Number of parameters: {n_params}\n')
+        # printing the neural network
+        print('\nPrinting learned weights\n')
+        most_acc.print_network()
+        # save the weights
+        if weights_path:
+            most_acc.save(weights_path)
+            print('weights saved to', weights_path)
+
+        # test the artificial neural network
+        print('\nTesting the NN...\n')
+        accuracy = 100 * most_acc.test(apbt.testing)
+        n_params = most_acc.num_params()
+        print('\nTesting complete\n')
+        print(f'\nAccuracy: {accuracy:.2f}%\n')
+        print(f'Number of parameters: {n_params}\n')
 
 
     

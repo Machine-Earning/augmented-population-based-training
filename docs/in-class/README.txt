@@ -1,6 +1,3 @@
-# ml-paper-project
-repo for ml term paper project
-
 This is an implementation of augmented population-based training. The necessary files are the following 
     main.py            (main file with options)
     ann.py             (dependency for all neural net functionalities)
@@ -15,7 +12,6 @@ No need to compile since the Python files are interpreted
 
 To run the tree with options, use the following command example:
 
-```
 $ python source/main.py \
 -a data/iris/iris-attr.txt \
 -d data/iris/iris-train.txt \
@@ -24,7 +20,6 @@ $ python source/main.py \
 -k 80 \
 -e 3000 \
 --debug
-```
 
 where python3 is the python 3.X.X interpreter, 
 usage: main.py [-h] -a ATTRIBUTES -d TRAINING -t TESTING [-w WEIGHTS] -k K_INDS -e EPOCHS
@@ -48,15 +43,14 @@ usage: main.py [-h] -a ATTRIBUTES -d TRAINING -t TESTING [-w WEIGHTS] -k K_INDS 
         --debug               debug mode, prints statements activated (optional)
 
 To find out about the options, use:
-```
 $ python3 main.py -h 
-```
+
 To run the different experiment files (should be in same directory as data files), use the following  command:
-```
+
 $ python3 testIdentity.py
 $ python3 testTennis.py 
 $ python3 testIris.py
-```
+
 where python3 is the python 3.X.X interpreter, and provided the data files are present 
 and in the same directory as the experiment files
 

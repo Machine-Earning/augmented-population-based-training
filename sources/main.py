@@ -35,8 +35,8 @@ def parse_args():
     parser.add_argument(
         '-t', '--testing',
         type=str , 
-        required=True,
-        help='path to the test data files (required)'
+        required=False,
+        help='path to the test data files (optional)'
     )
 
     parser.add_argument(
@@ -50,7 +50,8 @@ def parse_args():
         '-k', '--k-inds',
         type=int,
         required=True,
-        help='number of individuals in the population (default: 10)'
+        default=60,
+        help='number of individuals in the population (default: 60)'
     )
 
     parser.add_argument(
@@ -59,6 +60,14 @@ def parse_args():
         required=True,
         help='number of epochs to train'
     )
+
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        default=False,
+        help='debug mode, prints statements activated (optional)'
+    )
+
 
     # parse arguments
     args = parser.parse_args()
@@ -89,7 +98,7 @@ def main():
     )
 
     print('\nRunning the population based training\n')
-    best_net = apbt.train()
+    best_net, most_acc = apbt.train()
     print('\nPopulation Based Training complete\n')
     # create the artificial neural network
     # printing the neural network
@@ -107,7 +116,6 @@ def main():
     print('\nTesting complete\n')
     print(f'\nAccuracy: {accuracy:.2f}%\n')
     print(f'Number of parameters: {n_params}\n')
-
 
 
     
