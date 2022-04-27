@@ -22,21 +22,20 @@ def main():
     epochs = 2000 # number of epochs
 
 
-    apbt = APBT(
-        k,
-        epochs,
-        training_path,
-        testing_path,
-        attributes_path,
-        debugging
-    )
-
-    # set log path
-    apbt.log_path='logs/tennis.csv'
-
-
     # run trials
     for trial in range(3):
+        apbt = APBT(
+            k,
+            epochs,
+            training_path,
+            testing_path,
+            attributes_path,
+            debugging
+        )
+
+        # set log path
+        apbt.log_path= f'logs/tennis{trial}.csv'
+    
         print('Trial: ', trial)
         print('\nRunning the population based training\n')
         best_net, most_acc = apbt.train()

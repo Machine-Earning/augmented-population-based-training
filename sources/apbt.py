@@ -503,9 +503,13 @@ class APBT:
             # print the best net so far
             print(f'Current best net perf: {self.best[1]:.2f}', end='\n')
             print(f'Current best net accuracy: {self.best[2]:.2f}', end='\n')
+            print(f'Current best net size: {self.best[0].num_params()}', end='\n')
+            print(f'Current best net hyperparams: {self.best[3]}', end='\n')
             # print the most accurate net so far
             print(f'Current most accurate net perf: {self.most_acc[1]:.2f}', end='\n')
             print(f'Current most accurate net accuracy: {self.most_acc[2]:.2f}', end='\n')
+            print(f'Current most accurate net size: {self.most_acc[0].num_params()}', end='\n')
+            print(f'Current most accurate net hyperparams: {self.most_acc[3]}', end='\n')
             
         # log the histories
         utils.log_csv(self.log_path, [
