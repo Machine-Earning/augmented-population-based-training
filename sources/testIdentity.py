@@ -18,8 +18,8 @@ def main():
     testing_path = 'data/identity/identity-train.txt'
     attributes_path = 'data/identity/identity-attr.txt'
     debugging = True
-    k = 220 # population size, 80 good number
-    epochs = 6000 # number of epochs
+    k = 320 # population size, 80 good number
+    epochs = 6600 # number of epochs
 
 
     # run trials

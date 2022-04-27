@@ -19,7 +19,7 @@ def main():
     attributes_path = 'data/tennis/tennis-attr.txt'
     debugging = True
     k = 160 # population size, 80 good number
-    epochs = 2500 # number of epochs
+    epochs = 2600 # number of epochs
 
 
     # run trials
