@@ -9,7 +9,6 @@
 #############################################################
 
 # imports
-from ctypes import util
 from ann import ANN
 import random
 from copy import deepcopy
