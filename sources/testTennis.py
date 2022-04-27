@@ -18,8 +18,8 @@ def main():
     testing_path = 'data/tennis/tennis-train.txt'
     attributes_path = 'data/tennis/tennis-attr.txt'
     debugging = True
-    k = 80 # population size, 80 good number
-    epochs = 2000 # number of epochs
+    k = 160 # population size, 80 good number
+    epochs = 2500 # number of epochs
 
 
     # run trials
