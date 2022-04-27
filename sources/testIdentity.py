@@ -18,7 +18,7 @@ def main():
     testing_path = 'data/identity/identity-train.txt'
     attributes_path = 'data/identity/identity-attr.txt'
     debugging = True
-    k = 320 # population size, 80 good number
+    k = 1000 # population size, 80 good number
     epochs = 16000 # number of epochs
 
 
@@ -36,9 +36,6 @@ def main():
 
         # set log path
         apbt.log_path= f'logs/identity{trial}.csv'
-
-        # change readyness
-        apbt.READINESS = 1600
     
         print('Trial: ', trial)
         print('\nRunning the population based training\n')
