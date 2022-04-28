@@ -1,5 +1,4 @@
-# ml-paper-project
-repo for ml term paper project
+# Augmented Population Based Training
 
 This is an implementation of augmented population-based training. The necessary files are the following 
     main.py            (main file with options)
