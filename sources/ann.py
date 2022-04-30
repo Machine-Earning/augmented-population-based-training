@@ -220,7 +220,7 @@ class ANN:
         '''
         return self.forward(instance)
 
-    def loss(self, target, output):
+    def loss(self, target, output, no_decay=False):
         '''
         Compute the loss for SGD
         '''
@@ -229,6 +229,8 @@ class ANN:
         for i in range(self.output_units):
             loss += (target[i] - output[i]) ** 2
         loss /= 2.0
+
+        if no_decay: return loss 
 
         w_term = 0.0
         # adding all the weights
@@ -504,7 +506,7 @@ class ANN:
             # get the output
             output = self.forward(instance[0])
             # check if the output is correct
-            accuracy += (1.0 - self.loss(instance[1], output))
+            accuracy += (1.0 - self.loss(instance[1], output, no_decay=True))
         # get the average accuracy
         accuracy /= len(test_data)
 
