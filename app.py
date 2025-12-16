@@ -83,7 +83,7 @@ st.sidebar.header("⚙️ Configuration")
 # Dataset selection
 dataset = st.sidebar.selectbox(
     "Select Dataset",
-    ["Iris", "Tennis", "Identity"],
+    ["Iris", "Tennis", "Identity", "MNIST", "Fashion MNIST"],
     index=0
 )
 
@@ -92,24 +92,74 @@ dataset_map = {
     "Iris": {
         "attr": "data/iris/iris-attr.txt",
         "train": "data/iris/iris-train.txt",
-        "test": "data/iris/iris-test.txt"
+        "test": "data/iris/iris-test.txt",
+        "is_image": False
     },
     "Tennis": {
         "attr": "data/tennis/tennis-attr.txt",
         "train": "data/tennis/tennis-train.txt",
-        "test": "data/tennis/tennis-test.txt"
+        "test": "data/tennis/tennis-test.txt",
+        "is_image": False
     },
     "Identity": {
         "attr": "data/identity/identity-attr.txt",
         "train": "data/identity/identity-train.txt",
-        "test": None
+        "test": None,
+        "is_image": False
+    },
+    "MNIST": {
+        "attr": "data/mnist/mnist-attr.txt",
+        "train": "data/mnist/mnist-train.txt",
+        "test": "data/mnist/mnist-test.txt",
+        "is_image": True,
+        "samples": "data/samples/mnist_samples.npy"
+    },
+    "Fashion MNIST": {
+        "attr": "data/fashion_mnist/fashion-mnist-attr.txt",
+        "train": "data/fashion_mnist/fashion-mnist-train.txt",
+        "test": "data/fashion_mnist/fashion-mnist-test.txt",
+        "is_image": True,
+        "samples": "data/samples/fashion_mnist_samples.npy"
+    }
+}
+
+# Class name mappings for image datasets
+class_names = {
+    "MNIST": {
+        0: "0 (Zero)", 1: "1 (One)", 2: "2 (Two)", 3: "3 (Three)", 4: "4 (Four)",
+        5: "5 (Five)", 6: "6 (Six)", 7: "7 (Seven)", 8: "8 (Eight)", 9: "9 (Nine)"
+    },
+    "Fashion MNIST": {
+        0: "0 (T-shirt/top)",
+        1: "1 (Trouser)",
+        2: "2 (Pullover)",
+        3: "3 (Dress)",
+        4: "4 (Coat)",
+        5: "5 (Sandal)",
+        6: "6 (Shirt)",
+        7: "7 (Sneaker)",
+        8: "8 (Bag)",
+        9: "9 (Ankle boot)"
     }
 }
 
 # Training parameters
 st.sidebar.subheader("Training Parameters")
-k_inds = st.sidebar.slider("Population Size (k)", 10, 500, 40, 10)
-epochs = st.sidebar.slider("Number of Epochs", 10, 1000, 100, 10)
+
+# Adjust defaults based on dataset
+if dataset in ["MNIST", "Fashion MNIST"]:
+    default_pop = 20  # Smaller population for larger networks
+    default_epochs = 50  # Fewer epochs due to complexity
+    if dataset == "MNIST":
+        st.sidebar.info("💡 MNIST (handwritten digits): 784 inputs → 10 outputs (one-hot encoded)\nSmaller population/epochs recommended for speed")
+    else:  # Fashion MNIST
+        st.sidebar.info("💡 Fashion MNIST (clothing items): 784 inputs → 10 outputs (one-hot encoded)\nSmaller population/epochs recommended for speed")
+else:
+    default_pop = 40
+    default_epochs = 100
+
+k_inds = st.sidebar.slider("Population Size (k)", 10, 500, default_pop, 10)
+epochs = st.sidebar.slider("Number of Epochs", 10, 1000, default_epochs, 10)
 
 # Calculate default readiness as 5% of epochs
 default_readiness = int(epochs * 0.05)
@@ -239,6 +289,48 @@ if st.session_state.training_started:
         st.success("✅ Training Complete!")
     else:
         st.info(f"🔄 Training... Epoch {st.session_state.current_epoch}/{epochs}")
+
+# Show sample images for image datasets
+if dataset_map[dataset].get("is_image", False):
+    st.markdown("---")
+    st.subheader(f"📸 Sample Images from {dataset}")
+    
+    try:
+        sample_file = dataset_map[dataset].get("samples")
+        if sample_file and os.path.exists(sample_file):
+            samples = np.load(sample_file, allow_pickle=True).item()
+            images = samples['images']
+            labels = samples['labels']
+            
+            # Display images in a row
+            cols = st.columns(5)
+            for i, (img, label) in enumerate(zip(images, labels)):
+                with cols[i]:
+                    # Get class name if available
+                    label_text = class_names.get(dataset, {}).get(int(label), str(label))
+                    st.image(img, caption=f"Label: {label_text}", use_container_width=True, clamp=True)
+                    
+                    # Show prediction if training is complete
+                    if st.session_state.training_complete and st.session_state.best_net:
+                        net = st.session_state.best_net
+                        # Flatten and normalize image
+                        img_flat = img.reshape(1, -1).flatten() / 255.0
+                        # Get prediction
+                        output = net.predict(img_flat.tolist())
+                        predicted_class = np.argmax(output)
+                        confidence = output[predicted_class]
+                        
+                        # Get prediction class name
+                        pred_text = class_names.get(dataset, {}).get(int(predicted_class), str(predicted_class))
+                        
+                        if predicted_class == label:
+                            st.success(f"✓ Pred: {pred_text}\n({confidence*100:.1f}%)")
+                        else:
+                            st.error(f"✗ Pred: {pred_text}\n({confidence*100:.1f}%)")
+    except Exception as e:
+        st.warning(f"Could not load sample images: {e}")
+    
+    st.markdown("---")
 
 # Main content area with tabs (BEFORE training so they display during training)
 tab1, tab2, tab3, tab4, tab5 = st.tabs([

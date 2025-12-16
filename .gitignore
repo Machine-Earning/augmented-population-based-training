@@ -133,3 +133,5 @@ logs/
 # models/
 
 *.zip
+
+data/

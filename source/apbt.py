@@ -136,14 +136,13 @@ class APBT:
         to encode
         '''
         values = self.attributes[attr]
-        # encode the values
-        if len(values) > 1:
-            if values[0] == '0' and values[1] == '1':
-                return False
-            else:
-                return True
+        # encode the values - only skip encoding for binary 0-1 attributes
+        if len(values) == 2 and values[0] == '0' and values[1] == '1':
+            return False  # Don't encode - already binary
+        elif len(values) > 1:
+            return True  # Encode - categorical attribute
         else:
-            return False
+            return False  # Single value - don't encode
 
     def onehot(self, attr, value):
         '''
@@ -233,8 +232,8 @@ class APBT:
         input_units = 0
         for attr in self.in_attr:
             values = self.attributes[attr]
-            # check specifically for identity
-            if values[0] == '0' and values[1] == '1':
+            # check if it's a binary 0-1 attribute (must have EXACTLY 2 values: '0' and '1')
+            if len(values) == 2 and values[0] == '0' and values[1] == '1':
                 input_units += 1
             else:
                 input_units += len(values)
@@ -243,8 +242,8 @@ class APBT:
         output_units = 0
         for attr in self.out_attr:
             values = self.attributes[attr]
-            # check specifically for identity
-            if values[0] == '0' and values[1] == '1':
+            # check if it's a binary 0-1 attribute (must have EXACTLY 2 values: '0' and '1')
+            if len(values) == 2 and values[0] == '0' and values[1] == '1':
                 output_units += 1
             else:
                 output_units += len(values)

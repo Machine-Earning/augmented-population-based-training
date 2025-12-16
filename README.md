@@ -12,6 +12,19 @@ An implementation of **Augmented Population-Based Training (APBT)** - a hyperpar
 3. Click "▶️ Start Training"
 4. Watch neural networks compete and evolve in real-time!
 
+### Available Datasets:
+- **Iris** (150 samples, 4 features, 3 classes) - Classic flower classification
+- **Tennis** (14 samples, 4 features, 2 classes) - Weather prediction
+- **Identity** (100 samples, 5 features, 5 classes) - Synthetic dataset
+- **MNIST** (10,000 samples, 784 features, 10 classes) - Handwritten digits *(requires setup)*
+- **Fashion MNIST** (10,000 samples, 784 features, 10 classes) - Clothing items *(requires setup)*
+
+### To use MNIST datasets:
+```bash
+python download_mnist.py  # Download real MNIST & Fashion MNIST data
+streamlit run app.py       # Start dashboard
+```
+
 ### To start/restart the dashboard:
 ```bash
 conda activate torch
@@ -153,10 +166,12 @@ streamlit run app.py
 Then open http://localhost:8501 in your browser.
 
 **Dashboard Configuration:**
-- **Dataset:** Choose from Iris, Tennis, or Identity
-- **Population Size:** 10-500 networks (40 recommended)
-- **Epochs:** 10-1000 (100+ for good results)
+- **Dataset:** Choose from Iris, Tennis, Identity, MNIST, or Fashion MNIST
+- **Population Size:** 10-500 networks (40 recommended, 20 for MNIST)
+- **Epochs:** 10-1000 (100+ for good results, 50+ for MNIST)
 - **Advanced Settings:** Learning rate range, readiness threshold (defaults to 5% of epochs), truncation %
+
+**Note:** MNIST and Fashion MNIST use 784 input features (28x28 images), so training takes longer. The app automatically adjusts default parameters for these datasets.
 
 ### Command Line
 
@@ -441,6 +456,82 @@ Model Size:      Variable
 Best Topology:   Depends on problem size
 Learning Rate:   ~0.03-0.07
 ```
+
+### MNIST Dataset (28x28 digit images, 784 features, 10 classes)
+
+**Configuration:**
+```
+Population: 20 networks (smaller due to network size)
+Epochs: 50-100
+Time: ~10-20 minutes
+```
+
+**Expected Results:**
+```
+Accuracy:        70-85% (with limited training)
+Model Size:      2000-5000 parameters
+Best Topology:   [784, 32-64, 16-32, 10]
+Learning Rate:   ~0.001-0.01
+```
+
+**Setup:**
+```bash
+python download_mnist.py  # Downloads real MNIST dataset
+```
+
+### Fashion MNIST Dataset (28x28 fashion images, 784 features, 10 classes)
+
+**Configuration:**
+```
+Population: 20 networks (smaller due to network size)
+Epochs: 50-100
+Time: ~10-20 minutes
+```
+
+**Expected Results:**
+```
+Accuracy:        65-80% (with limited training)
+Model Size:      2000-5000 parameters
+Best Topology:   [784, 32-64, 16-32, 10]
+Learning Rate:   ~0.001-0.01
+```
+
+**Setup:** Same as MNIST - run `download_mnist.py` (downloads real Fashion MNIST images)
+
+**Fashion MNIST Classes:**
+- 0: T-shirt/top
+- 1: Trouser
+- 2: Pullover
+- 3: Dress
+- 4: Coat
+- 5: Sandal
+- 6: Shirt
+- 7: Sneaker
+- 8: Bag
+- 9: Ankle boot
+
+### 🖼️ Image Dataset Features
+
+When using MNIST or Fashion MNIST, the dashboard includes:
+
+**Sample Image Display:**
+- 5 sample images displayed horizontally
+- Ground truth labels shown under each image
+- After training: Model predictions with confidence %
+- ✓ Green checkmark for correct predictions
+- ✗ Red X for incorrect predictions
+
+**Automatic Optimizations:**
+- Smaller default population (20 vs 40) for faster training
+- Adjusted epoch recommendations (100-200 epochs)
+- Warning about large input size (784 features)
+- Real-time visualization updates during training
+
+**Data Source:**
+- Uses PyTorch's torchvision to download official datasets
+- 10,000 training + 2,000 test samples (subsets for speed)
+- Full datasets available: 60,000 training + 10,000 test images
+- To use full datasets, modify `subset_size_train` and `subset_size_test` in `download_mnist.py`
 
 ---
 
