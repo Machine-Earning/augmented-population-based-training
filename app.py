@@ -11,6 +11,16 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import sys
 import os
+import logging
+from datetime import datetime
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # Add source directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'source'))
@@ -175,12 +185,24 @@ with col2:
 if start_button and not st.session_state.training_started:
     st.session_state.training_started = True
     
+    logger.info("="*80)
+    logger.info("TRAINING SESSION STARTED")
+    logger.info("="*80)
+    logger.info(f"Configuration:")
+    logger.info(f"  - Dataset: {dataset}")
+    logger.info(f"  - Population Size: {k_inds}")
+    logger.info(f"  - Epochs: {epochs}")
+    logger.info(f"  - Readiness Threshold: {readiness}")
+    logger.info(f"  - Truncation: {truncation*100:.0f}%")
+    logger.info(f"  - Learning Rate Range: [{lr_min:.4f}, {lr_max:.4f}]")
+    
     with st.spinner("Initializing population..."):
         try:
             # Get dataset paths
             paths = dataset_map[dataset]
             
             # Initialize APBT
+            logger.info("Initializing population...")
             apbt = APBT(
                 k=k_inds,
                 end_training=epochs,
@@ -197,8 +219,14 @@ if start_button and not st.session_state.training_started:
             
             st.session_state.apbt = apbt
             st.success("✅ Population initialized!")
+            logger.info(f"✓ Population of {k_inds} networks initialized successfully")
+            logger.info(f"  - Input units: {apbt.input_units}")
+            logger.info(f"  - Output units: {apbt.output_units}")
+            logger.info(f"  - Training examples: {len(apbt.training)}")
+            logger.info(f"  - Validation examples: {len(apbt.validation)}")
             
         except Exception as e:
+            logger.error(f"✗ Error initializing APBT: {str(e)}")
             st.error(f"❌ Error initializing APBT: {str(e)}")
             st.session_state.training_started = False
 
@@ -802,6 +830,14 @@ if st.session_state.training_started and not st.session_state.training_complete:
     if st.session_state.current_epoch < epochs:
         e = st.session_state.current_epoch
         
+        # Log epoch start
+        if e == 0:
+            logger.info("-"*80)
+            logger.info("TRAINING STARTED")
+            logger.info("-"*80)
+        
+        exploitation_count = 0
+        
         # Train one epoch
         for i in range(apbt.k):
             net = apbt.population[i]
@@ -818,6 +854,7 @@ if st.session_state.training_started and not st.session_state.training_complete:
             
             # Exploit and explore
             if apbt.is_ready(last, e, i):
+                exploitation_count += 1
                 new_net, new_hyperparams = apbt.exploit(net, hyperparams)
                 if apbt.is_diff(new_net, net):
                     net, hyperparams = apbt.explore(new_net, new_hyperparams)
@@ -833,6 +870,15 @@ if st.session_state.training_started and not st.session_state.training_complete:
         # Update best
         best = apbt.get_best()
         most_acc = apbt.get_most_accurate()
+        
+        # Log epoch results
+        logger.info(f"Epoch {e+1}/{epochs} | "
+                   f"Best Perf: {best[1]:.2f} | "
+                   f"Best Acc: {best[2]*100:.2f}% | "
+                   f"Most Acc: {most_acc[2]*100:.2f}% | "
+                   f"Avg Acc: {np.mean(apbt.accuracies)*100:.2f}% | "
+                   f"Size: {best[0].num_params()} params"
+                   f"{' | Exploitations: ' + str(exploitation_count) if exploitation_count > 0 else ''}")
         
         # Store history
         st.session_state.history['epoch'].append(e)
@@ -854,6 +900,40 @@ if st.session_state.training_started and not st.session_state.training_complete:
         # Rerun to show updated charts
         st.rerun()
     else:
+        if not st.session_state.training_complete:
+            # Log training completion (only once)
+            logger.info("-"*80)
+            logger.info("TRAINING COMPLETE!")
+            logger.info("-"*80)
+            
+            # Get final results
+            apbt = st.session_state.apbt
+            best = apbt.get_best()
+            most_acc = apbt.get_most_accurate()
+            
+            logger.info("Final Results:")
+            logger.info(f"  Best Performer:")
+            logger.info(f"    - Topology: {best[0].topology}")
+            logger.info(f"    - Fitness: {best[1]:.2f}")
+            logger.info(f"    - Accuracy: {best[2]*100:.2f}%")
+            logger.info(f"    - Parameters: {best[0].num_params()}")
+            logger.info(f"    - Learning Rate: {best[3]['learning_rate']:.4f}")
+            logger.info(f"    - Momentum: {best[3]['momentum']:.3f}")
+            logger.info(f"    - Decay: {best[3]['decay']:.4f}")
+            
+            logger.info(f"  Most Accurate:")
+            logger.info(f"    - Topology: {most_acc[0].topology}")
+            logger.info(f"    - Accuracy: {most_acc[2]*100:.2f}%")
+            logger.info(f"    - Fitness: {most_acc[1]:.2f}")
+            logger.info(f"    - Parameters: {most_acc[0].num_params()}")
+            
+            logger.info(f"  Population Stats:")
+            logger.info(f"    - Average Accuracy: {np.mean(apbt.accuracies)*100:.2f}%")
+            logger.info(f"    - Average Performance: {np.mean(apbt.perfs):.2f}")
+            logger.info(f"    - Best/Worst Ratio: {max(apbt.perfs)/max(min(apbt.perfs), 0.001):.2f}x")
+            
+            logger.info("="*80)
+        
         st.session_state.training_complete = True
         st.balloons()
 
