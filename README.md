@@ -154,9 +154,9 @@ Then open http://localhost:8501 in your browser.
 
 **Dashboard Configuration:**
 - **Dataset:** Choose from Iris, Tennis, or Identity
-- **Population Size:** 10-100 networks (40 recommended)
-- **Epochs:** 10-500 (100+ for good results)
-- **Advanced Settings:** Learning rate range, readiness threshold, truncation %
+- **Population Size:** 10-500 networks (40 recommended)
+- **Epochs:** 10-1000 (100+ for good results)
+- **Advanced Settings:** Learning rate range, readiness threshold (defaults to 5% of epochs), truncation %
 
 ### Command Line
 
@@ -209,7 +209,7 @@ Population-based training manager:
 - **Initialization:** Create k networks with random hyperparameters & architectures
 - **Training:** Each network trains for 1 epoch per iteration
 - **Evaluation:** Fitness = f(accuracy, model_size)
-- **Exploitation:** Bottom 20% copy from top 20% (every ~220 epochs)
+- **Exploitation:** Bottom 20% copy from top 20% (every ~5% of total epochs by default)
 - **Exploration:** Perturb hyperparameters (×0.8 or ×1.2) and architecture (±1 unit)
 
 ### Key Parameters
@@ -223,7 +223,7 @@ HL_RANGE = (1, 4)              # Hidden layers
 HUPL_RANGE = (2, 10)           # Units per layer
 
 # Algorithm Parameters
-READINESS = 220                 # Epochs before exploitation
+READINESS = 5% of epochs       # Epochs before exploitation (dynamic)
 TRUNC = 0.2                    # Top/bottom 20%
 PERTS = (0.8, 1.2)            # Perturbation factors
 X, Y = 1.09, 1.02             # Fitness function factors
@@ -249,7 +249,7 @@ Network A wins! Best balance of accuracy and size.
 
 ### Exploitation (Truncation Selection)
 
-Every ~220 epochs, if a network is in the bottom 20%:
+Every ~5% of total epochs (configurable), if a network is in the bottom 20%:
 ```python
 if my_rank > 80th_percentile:
     top_performer = random.choice(top_20%)
@@ -313,7 +313,7 @@ elif removed_unit:
 ### Key Patterns to Watch
 
 #### 1. Exploitation Events
-**Sudden performance jumps** around epochs 220, 440, 660, etc.
+**Sudden performance jumps** at readiness intervals (default: every 5% of total epochs)
 - Bottom 20% of networks copy weights from top 20%
 - Performance chart shows dramatic vertical jumps
 - Leaderboard shows major reshuffling
@@ -365,9 +365,12 @@ def f(self, acc, size):
 
 ### Adjusting Exploitation Timing
 
-Edit `source/apbt.py` line 73:
+In the dashboard's Advanced Settings, adjust the Readiness Threshold slider.
+Default: 5% of total epochs (e.g., 5 epochs for 100 total, 50 epochs for 1000 total)
+
+Or edit `source/apbt.py` line 73:
 ```python
-self.READINESS = 220  # Try: 100 (more frequent), 500 (less frequent)
+self.READINESS = 220  # Custom value: lower for more frequent, higher for less frequent
 ```
 
 ### Changing Selection Pressure

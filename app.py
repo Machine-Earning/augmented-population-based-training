@@ -98,8 +98,11 @@ dataset_map = {
 
 # Training parameters
 st.sidebar.subheader("Training Parameters")
-k_inds = st.sidebar.slider("Population Size (k)", 10, 100, 40, 10)
-epochs = st.sidebar.slider("Number of Epochs", 10, 500, 100, 10)
+k_inds = st.sidebar.slider("Population Size (k)", 10, 500, 40, 10)
+epochs = st.sidebar.slider("Number of Epochs", 10, 1000, 100, 10)
+
+# Calculate default readiness as 5% of epochs
+default_readiness = int(epochs * 0.05)
 
 # Advanced settings
 with st.sidebar.expander("🔧 Advanced Settings"):
@@ -108,7 +111,8 @@ with st.sidebar.expander("🔧 Advanced Settings"):
     
     st.markdown("---")
     
-    readiness = st.slider("Readiness Threshold", 50, 500, 220, 10)
+    st.info(f"💡 Recommended Readiness: {default_readiness} epochs (5% of total)")
+    readiness = st.slider("Readiness Threshold", 10, 500, default_readiness, 10)
     truncation = st.slider("Truncation %", 10, 50, 20, 5) / 100
 
 # Initialize session state
@@ -200,78 +204,15 @@ if start_button and not st.session_state.training_started:
 
 # Show progress bar if training has started
 if st.session_state.training_started:
-    progress_bar = st.progress(st.session_state.current_epoch / max(epochs, 1))
-    status_text = st.empty()
+    progress = st.session_state.current_epoch / max(epochs, 1)
+    st.progress(progress)
     
     if st.session_state.training_complete:
-        status_text.success("✅ Training Complete!")
+        st.success("✅ Training Complete!")
     else:
-        status_text.info(f"🔄 Training... Epoch {st.session_state.current_epoch}/{epochs}")
+        st.info(f"🔄 Training... Epoch {st.session_state.current_epoch}/{epochs}")
 
-# Training loop with live updates
-if st.session_state.training_started and not st.session_state.training_complete:
-    apbt = st.session_state.apbt
-    
-    # Run one epoch at a time for live updates
-    if st.session_state.current_epoch < epochs:
-        e = st.session_state.current_epoch
-        
-        # Train one epoch
-        for i in range(apbt.k):
-            net = apbt.population[i]
-            hyperparams = apbt.hyperparams[i]
-            last = apbt.last_ready[i]
-            
-            # Optimize the net
-            net = apbt.step(net)
-            perf, accuracy = apbt.evaluate(net)
-            
-            apbt.perfs[i] = perf
-            apbt.accuracies[i] = accuracy
-            apbt.update_leaderboard()
-            
-            # Exploit and explore
-            if apbt.is_ready(last, e, i):
-                new_net, new_hyperparams = apbt.exploit(net, hyperparams)
-                if apbt.is_diff(new_net, net):
-                    net, hyperparams = apbt.explore(new_net, new_hyperparams)
-                    net.set_hyperparameters(hyperparams)
-                    perf, accuracy = apbt.evaluate(net)
-                    apbt.perfs[i] = perf
-                    apbt.accuracies[i] = accuracy
-                    apbt.update_leaderboard()
-            
-            apbt.population[i] = net
-            apbt.hyperparams[i] = hyperparams
-        
-        # Update best
-        best = apbt.get_best()
-        most_acc = apbt.get_most_accurate()
-        
-        # Store history
-        st.session_state.history['epoch'].append(e)
-        st.session_state.history['best_perf'].append(best[1])
-        st.session_state.history['best_acc'].append(best[2])
-        st.session_state.history['best_size'].append(best[0].num_params())
-        st.session_state.history['most_acc'].append(most_acc[2])
-        st.session_state.history['avg_perf'].append(np.mean(apbt.perfs))
-        st.session_state.history['avg_acc'].append(np.mean(apbt.accuracies))
-        st.session_state.history['learning_rate'].append(best[3]['learning_rate'])
-        st.session_state.history['momentum'].append(best[3]['momentum'])
-        st.session_state.history['decay'].append(best[3]['decay'])
-        st.session_state.history['best_topology'].append(best[0].topology.copy())
-        st.session_state.history['most_acc_topology'].append(most_acc[0].topology.copy())
-        
-        st.session_state.best_net = best[0]
-        st.session_state.current_epoch += 1
-        
-        # Force immediate rerun for next epoch (no sleep for faster updates)
-        st.rerun()
-    else:
-        st.session_state.training_complete = True
-        st.balloons()
-
-# Main content area with tabs (placed AFTER training logic so it shows updates)
+# Main content area with tabs (BEFORE training so they display during training)
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Training Progress", 
     "🏆 Leaderboard", 
@@ -519,7 +460,7 @@ with tab3:
                         hovertemplate=f'Layer {layer_idx}<br>Unit {unit_idx}<extra></extra>'
                     ))
             
-            # Draw connections (sample, not all for clarity)
+            # Draw connections between layers
             for layer_idx in range(layers - 1):
                 num_units_current = topology[layer_idx]
                 num_units_next = topology[layer_idx + 1]
@@ -527,14 +468,15 @@ with tab3:
                 y_offset_current = (max_units - num_units_current) / 2
                 y_offset_next = (max_units - num_units_next) / 2
                 
-                # Draw subset of connections to avoid clutter
-                for i in range(min(5, num_units_current)):
-                    for j in range(min(5, num_units_next)):
+                # Draw sample connections (not all to avoid clutter on large networks)
+                max_connections_per_layer = min(8, num_units_current)
+                for i in range(max_connections_per_layer):
+                    for j in range(min(8, num_units_next)):
                         fig.add_trace(go.Scatter(
                             x=[layer_idx, layer_idx + 1],
                             y=[i + y_offset_current, j + y_offset_next],
                             mode='lines',
-                            line=dict(width=0.5, color='rgba(255,255,255,0.2)'),
+                            line=dict(width=1.5, color='rgba(100,200,255,0.5)'),
                             showlegend=False,
                             hoverinfo='skip'
                         ))
@@ -556,13 +498,18 @@ with tab3:
         num_epochs_best = len(st.session_state.history['best_topology'])
         
         if num_epochs_best > 0:
-            epoch_best = st.slider(
-                "Select Epoch (Best Performer)",
-                min_value=0,
-                max_value=num_epochs_best - 1,
-                value=num_epochs_best - 1,
-                key='slider_best'
-            )
+            # Only show slider if there's more than 1 epoch
+            if num_epochs_best > 1:
+                epoch_best = st.slider(
+                    "Select Epoch (Best Performer)",
+                    min_value=0,
+                    max_value=num_epochs_best - 1,
+                    value=num_epochs_best - 1,
+                    key='slider_best'
+                )
+            else:
+                epoch_best = 0
+                st.info("Slider will appear after more epochs complete")
             
             best_topology = st.session_state.history['best_topology'][epoch_best]
             
@@ -597,13 +544,18 @@ with tab3:
         num_epochs_acc = len(st.session_state.history['most_acc_topology'])
         
         if num_epochs_acc > 0:
-            epoch_acc = st.slider(
-                "Select Epoch (Most Accurate)",
-                min_value=0,
-                max_value=num_epochs_acc - 1,
-                value=num_epochs_acc - 1,
-                key='slider_acc'
-            )
+            # Only show slider if there's more than 1 epoch
+            if num_epochs_acc > 1:
+                epoch_acc = st.slider(
+                    "Select Epoch (Most Accurate)",
+                    min_value=0,
+                    max_value=num_epochs_acc - 1,
+                    value=num_epochs_acc - 1,
+                    key='slider_acc'
+                )
+            else:
+                epoch_acc = 0
+                st.info("Slider will appear after more epochs complete")
             
             acc_topology = st.session_state.history['most_acc_topology'][epoch_acc]
             
@@ -767,15 +719,28 @@ with tab5:
         ))
     
     fig.update_layout(
-        title="Fitness Landscape: Accuracy vs Model Size",
+        title=dict(
+            text="Fitness Landscape: Accuracy vs Model Size",
+            font=dict(size=24)
+        ),
         scene=dict(
-            xaxis_title='Accuracy (%)',
-            yaxis_title='Model Size (parameters)',
-            zaxis_title='Fitness',
+            xaxis=dict(
+                title=dict(text='Accuracy (%)', font=dict(size=16)),
+                tickfont=dict(size=14)
+            ),
+            yaxis=dict(
+                title=dict(text='Model Size (parameters)', font=dict(size=16)),
+                tickfont=dict(size=14)
+            ),
+            zaxis=dict(
+                title=dict(text='Fitness', font=dict(size=16)),
+                tickfont=dict(size=14)
+            ),
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.3))
         ),
         template="plotly_dark",
-        height=600
+        height=900,
+        font=dict(size=14)
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -811,13 +776,86 @@ with tab5:
         
         fig_scatter.update_layout(
             template="plotly_dark",
-            height=500,
-            title="Population Distribution: Accuracy vs Complexity",
-            xaxis_title="Model Complexity (parameters)",
-            yaxis_title="Accuracy (%)"
+            height=700,
+            title=dict(
+                text="Population Distribution: Accuracy vs Complexity",
+                font=dict(size=22)
+            ),
+            xaxis=dict(
+                title=dict(text="Model Complexity (parameters)", font=dict(size=16)),
+                tickfont=dict(size=14)
+            ),
+            yaxis=dict(
+                title=dict(text="Accuracy (%)", font=dict(size=16)),
+                tickfont=dict(size=14)
+            ),
+            font=dict(size=14)
         )
         
         st.plotly_chart(fig_scatter, use_container_width=True)
+
+# Training loop - runs AFTER displaying charts for live updates
+if st.session_state.training_started and not st.session_state.training_complete:
+    apbt = st.session_state.apbt
+    
+    # Run one epoch at a time for live updates
+    if st.session_state.current_epoch < epochs:
+        e = st.session_state.current_epoch
+        
+        # Train one epoch
+        for i in range(apbt.k):
+            net = apbt.population[i]
+            hyperparams = apbt.hyperparams[i]
+            last = apbt.last_ready[i]
+            
+            # Optimize the net
+            net = apbt.step(net)
+            perf, accuracy = apbt.evaluate(net)
+            
+            apbt.perfs[i] = perf
+            apbt.accuracies[i] = accuracy
+            apbt.update_leaderboard()
+            
+            # Exploit and explore
+            if apbt.is_ready(last, e, i):
+                new_net, new_hyperparams = apbt.exploit(net, hyperparams)
+                if apbt.is_diff(new_net, net):
+                    net, hyperparams = apbt.explore(new_net, new_hyperparams)
+                    net.set_hyperparameters(hyperparams)
+                    perf, accuracy = apbt.evaluate(net)
+                    apbt.perfs[i] = perf
+                    apbt.accuracies[i] = accuracy
+                    apbt.update_leaderboard()
+            
+            apbt.population[i] = net
+            apbt.hyperparams[i] = hyperparams
+        
+        # Update best
+        best = apbt.get_best()
+        most_acc = apbt.get_most_accurate()
+        
+        # Store history
+        st.session_state.history['epoch'].append(e)
+        st.session_state.history['best_perf'].append(best[1])
+        st.session_state.history['best_acc'].append(best[2])
+        st.session_state.history['best_size'].append(best[0].num_params())
+        st.session_state.history['most_acc'].append(most_acc[2])
+        st.session_state.history['avg_perf'].append(np.mean(apbt.perfs))
+        st.session_state.history['avg_acc'].append(np.mean(apbt.accuracies))
+        st.session_state.history['learning_rate'].append(best[3]['learning_rate'])
+        st.session_state.history['momentum'].append(best[3]['momentum'])
+        st.session_state.history['decay'].append(best[3]['decay'])
+        st.session_state.history['best_topology'].append(best[0].topology.copy())
+        st.session_state.history['most_acc_topology'].append(most_acc[0].topology.copy())
+        
+        st.session_state.best_net = best[0]
+        st.session_state.current_epoch += 1
+        
+        # Rerun to show updated charts
+        st.rerun()
+    else:
+        st.session_state.training_complete = True
+        st.balloons()
 
 # Footer
 st.markdown("---")
