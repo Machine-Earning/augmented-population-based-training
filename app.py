@@ -714,6 +714,60 @@ with tab5:
     Where X = 1.09 (rewards accuracy) and Y = 1.02 (penalizes model size)
     """)
     
+    # Population scatter plot - FIRST
+    if st.session_state.apbt and len(st.session_state.history['epoch']) > 0:
+        st.subheader("Population Distribution: Accuracy vs Complexity")
+        
+        apbt = st.session_state.apbt
+        
+        scatter_data = []
+        for idx, net in enumerate(apbt.population):
+            scatter_data.append({
+                'Network ID': idx,
+                'Accuracy': apbt.accuracies[idx] * 100,
+                'Size': net.num_params(),
+                'Performance': apbt.perfs[idx],
+                'Rank': apbt.leaderboard.index(idx) + 1
+            })
+        
+        df_scatter = pd.DataFrame(scatter_data)
+        
+        fig_scatter = px.scatter(
+            df_scatter,
+            x='Size',
+            y='Accuracy',
+            size='Performance',
+            color='Rank',
+            hover_data=['Network ID', 'Performance'],
+            color_continuous_scale='Turbo',
+            labels={'Accuracy': 'Accuracy (%)', 'Size': 'Model Complexity (parameters)'}
+        )
+        
+        fig_scatter.update_layout(
+            template="plotly_dark",
+            height=700,
+            title=dict(
+                text="Population Distribution: Accuracy vs Complexity",
+                font=dict(size=22)
+            ),
+            xaxis=dict(
+                title=dict(text="Model Complexity (parameters)", font=dict(size=16)),
+                tickfont=dict(size=14)
+            ),
+            yaxis=dict(
+                title=dict(text="Accuracy (%)", font=dict(size=16)),
+                tickfont=dict(size=14)
+            ),
+            font=dict(size=14)
+        )
+        
+        st.plotly_chart(fig_scatter, use_container_width=True)
+        
+        st.markdown("---")
+    
+    # 3D Fitness landscape - SECOND
+    st.subheader("3D Fitness Landscape")
+    
     # Create 3D fitness landscape
     accuracy_range = np.linspace(0.5, 1.0, 50)
     size_range = np.linspace(10, 200, 50)
@@ -772,55 +826,6 @@ with tab5:
     )
     
     st.plotly_chart(fig, use_container_width=True)
-    
-    # Pareto front if training has started
-    if st.session_state.apbt and len(st.session_state.history['epoch']) > 0:
-        st.subheader("Population: Accuracy vs Size")
-        
-        apbt = st.session_state.apbt
-        
-        scatter_data = []
-        for idx, net in enumerate(apbt.population):
-            scatter_data.append({
-                'Network ID': idx,
-                'Accuracy': apbt.accuracies[idx] * 100,
-                'Size': net.num_params(),
-                'Performance': apbt.perfs[idx],
-                'Rank': apbt.leaderboard.index(idx) + 1
-            })
-        
-        df_scatter = pd.DataFrame(scatter_data)
-        
-        fig_scatter = px.scatter(
-            df_scatter,
-            x='Size',
-            y='Accuracy',
-            size='Performance',
-            color='Rank',
-            hover_data=['Network ID', 'Performance'],
-            color_continuous_scale='Turbo',
-            labels={'Accuracy': 'Accuracy (%)', 'Size': 'Model Complexity (parameters)'}
-        )
-        
-        fig_scatter.update_layout(
-            template="plotly_dark",
-            height=700,
-            title=dict(
-                text="Population Distribution: Accuracy vs Complexity",
-                font=dict(size=22)
-            ),
-            xaxis=dict(
-                title=dict(text="Model Complexity (parameters)", font=dict(size=16)),
-                tickfont=dict(size=14)
-            ),
-            yaxis=dict(
-                title=dict(text="Accuracy (%)", font=dict(size=16)),
-                tickfont=dict(size=14)
-            ),
-            font=dict(size=14)
-        )
-        
-        st.plotly_chart(fig_scatter, use_container_width=True)
 
 # Training loop - runs AFTER displaying charts for live updates
 if st.session_state.training_started and not st.session_state.training_complete:
